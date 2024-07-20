@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: antonio3a-prometheus
+    hostname: prometheus.antonio3a.aaa
+    ports:
+      - "9090:9090"
+    volumes:
+      - ${AAA_HOME}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - antonio3a-prometheus-data-vol:/prometheus
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  antonio3a-prometheus-data-vol:
+    external: true

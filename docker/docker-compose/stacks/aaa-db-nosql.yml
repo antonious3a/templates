@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  mongodb:
+    image: mongo:7.0.11-jammy
+    container_name: antonio3a-mongodb
+    hostname: mongodb.antonio3a.aaa
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${AAA_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${AAA_PASS}
+    ports:
+      - "27017:27017"
+    volumes:
+      - antonio3a-mongodb-data-vol:/data/db
+      - antonio3a-mongodb-config-vol:/data/configdb
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5.20.0-enterprise
+    container_name: antonio3a-neo4j
+    hostname: neo4j.antonio3a.aaa
+    environment:
+      - apoc.export.file.enabled=true
+      - apoc.import.file.enabled=true
+      - apoc.import.file.use_neo4j_config=true
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_AUTH=neo4j/${AAA_PASS}
+    ports:
+      - "7473:7473"
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - antonio3a-neo4j-data-vol:/data
+      - antonio3a-neo4j-logs-vol:/logs
+      - antonio3a-neo4j-plugins-vol:/plugins
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  antonio3a-neo4j-data-vol:
+    external: true
+  antonio3a-neo4j-logs-vol:
+    external: true
+  antonio3a-neo4j-plugins-vol:
+    external: true
+  antonio3a-mongodb-data-vol:
+    external: true
+  antonio3a-mongodb-config-vol:
+    external: true

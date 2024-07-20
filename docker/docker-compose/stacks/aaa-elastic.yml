@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.14.1
+    container_name: antonio3a-elasticsearch
+    hostname: elasticsearch.antonio3a.aaa
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - antonio3a-net
+    volumes:
+      - antonio3a-elasticsearch-data-vol:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+
+  logstash:
+    image: logstash:8.14.1
+    container_name: antonio3a-logstash
+    hostname: logstash.antonio3a.aaa
+    volumes:
+      - ${AAA_HOME}/logstash/pipeline:/usr/share/logstash/pipeline
+      - ${AAA_HOME}/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: kibana:8.14.1
+    container_name: antonio3a-kibana
+    hostname: kibana.antonio3a.aaa
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch.antonio3a.aaa:9200
+    ports:
+      - "5701:5601"
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  antonio3a-elasticsearch-data-vol:
+    external: true

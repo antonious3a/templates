@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  portainer:
+    image: portainer/portainer-ce:2.20.3-alpine
+    container_name: antonio3a-portainer
+    hostname: portainer.antonio3a.aaa
+    restart: always
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data-vol:/data
+    networks:
+      - antonio3a-net
+
+
+  portainer-agent:
+    image: portainer/agent:2.20.3-alpine
+    container_name: antonio3a-portainer-agent
+    hostname: agent.antonio3a.aaa
+    restart: always
+    ports:
+      - "9001:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    networks:
+      - antonio3a-net
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  portainer-data-vol:
+    external: true

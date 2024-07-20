@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  sonarqube:
+    image: sonarqube:10.6.0-community
+    container_name: antonio3a-sonarqube
+    hostname: sonarqube.antonio3a.aaa
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://antonio3a-postgresql/antonio3a_sonarqube_db
+      - SONAR_JDBC_USERNAME=${AAA_USER}
+      - SONAR_JDBC_PASSWORD=${AAA_PASS}
+    ports:
+      - "9400:9000"
+    volumes:
+      - antonio3a-sonarqube-data-vol:/opt/sonarqube/data
+      - antonio3a-sonarqube-logs-vol:/opt/sonarqube/logs
+      - antonio3a-sonarqube-extensions-vol:/opt/sonarqube/extensions
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+  jenkins:
+    image: jenkins/jenkins:lts-alpine-jdk21
+    container_name: antonio3a-jenkins
+    hostname: jenkins.antonio3a.aaa
+    ports:
+      - "8180:8080"
+      - "50000:50000"
+    volumes:
+      - antonio3a-jenkins-vol:/var/jenkins_home
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  antonio3a-sonarqube-data-vol:
+    external: true
+  antonio3a-sonarqube-logs-vol:
+    external: true
+  antonio3a-sonarqube-extensions-vol:
+    external: true
+  antonio3a-jenkins-vol:
+    external: true
+  antonio3a-openproject-data-vol:
+    external: true

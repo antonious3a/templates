@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: keycloak/keycloak:25.0.1-0
+    container_name: antonio3a-keycloak-TEST
+    hostname: keycloak.antonio3a.aaa
+    environment:
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/antonio3a_keycloak_db-test
+      - KC_DB_USERNAME=${AAA_USER}
+      - KC_DB_PASSWORD=${AAA_PASS}
+      - KEYCLOAK_ADMIN=${AAA_USER}
+      - KEYCLOAK_ADMIN_PASSWORD=${AAA_PASS}
+    ports:
+      - "18480:8080"
+      - "18443:8443"
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+    command: [
+      "/opt/keycloak/bin/kc.sh",
+      "start-dev",
+      "--features=token-exchange",
+    ]
+
+networks:
+  antonio3a-net:
+    external: true

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  antonio3a-eureka-server-1:
+    image: antonio3a/aaa-eureka-server:0.0.1
+    container_name: antonio3a-eureka-server-1
+    hostname: eureka1.antonio3a.aaa
+    environment:
+      - SPRING_PROFILES_ACTIVE=aaa-1
+      - AAA_VAULT_URI=${AAA_VAULT_URI}
+      - AAA_VAULT_TOKEN=${AAA_VAULT_TOKEN}
+    ports:
+      - "8761:8761"
+    networks:
+      - antonio3a-net
+    restart: always
+
+  antonio3a-eureka-server-2:
+    image: antonio3a/aaa-eureka-server:0.0.1
+    container_name: antonio3a-eureka-server-2
+    hostname: eureka2.antonio3a.aaa
+    environment:
+      - SPRING_PROFILES_ACTIVE=aaa-2
+      - AAA_VAULT_URI=${AAA_VAULT_URI}
+      - AAA_VAULT_TOKEN=${AAA_VAULT_TOKEN}
+    ports:
+      - "8762:8762"
+    networks:
+      - antonio3a-net
+    restart: always
+
+  antonio3a-eureka-server-3:
+    image: antonio3a/aaa-eureka-server:0.0.1
+    container_name: antonio3a-eureka-server-3
+    hostname: eureka3.antonio3a.aaa
+    environment:
+      - SPRING_PROFILES_ACTIVE=aaa-3
+      - AAA_VAULT_URI=${AAA_VAULT_URI}
+      - AAA_VAULT_TOKEN=${AAA_VAULT_TOKEN}
+    ports:
+      - "8763:8763"
+    networks:
+      - antonio3a-net
+    restart: always
+
+networks:
+  antonio3a-net:
+    external: true

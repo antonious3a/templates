@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.4.0
+    container_name: antonio3a-mysql
+    hostname: mysql.antonio3a.aaa
+    environment:
+      - MYSQL_ROOT_PASSWORD=${AAA_PASS}
+      - MYSQL_DATABASE=${AAA_USER}_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - antonio3a-mysql-data-vol:/var/lib/mysql
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+  postgresql:
+    image: postgis/postgis:16-3.4
+    container_name: antonio3a-postgresql
+    hostname: postgresql.antonio3a.aaa
+    environment:
+      - POSTGRES_USER=${AAA_USER}
+      - POSTGRES_PASSWORD=${AAA_PASS}
+      - POSTGRES_DB=${AAA_USER}_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - antonio3a-postgresql-data-vol:/var/lib/postgresql/data
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: antonio3a-sqlserver
+    hostname: sqlserver.antonio3a.aaa
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${AAA_PASS}
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - antonio3a-sqlserver-data-vol:/var/opt/mssql
+    networks:
+      - antonio3a-net
+    restart: unless-stopped
+
+networks:
+  antonio3a-net:
+    external: true
+
+volumes:
+  antonio3a-mysql-data-vol:
+    external: true
+  antonio3a-postgresql-data-vol:
+    external: true
+  antonio3a-sqlserver-data-vol:
+    external: true
