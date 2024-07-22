@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   grafana:
-    image: grafana/grafana:11.0.0
+    image: grafana/grafana:11.1.0
     container_name: antonio3a-grafana
     hostname: grafana.antonio3a.aaa
     ports:
@@ -14,7 +14,7 @@ services:
       - antonio3a-grafana-data-vol:/var/lib/grafana
 
   loki:
-    image: grafana/loki:main
+    image: grafana/loki:3.1.0
     container_name: antonio3a-loki
     hostname: loki.antonio3a.aaa
     ports:
@@ -22,7 +22,7 @@ services:
     networks:
       - antonio3a-net
     volumes:
-      - antonio3a-loki-data-vol:/loki
+      - antonio3a-grafana-loki-data-vol:/loki
     restart: unless-stopped
 
   tempo:
@@ -36,7 +36,7 @@ services:
       - antonio3a-net
     volumes:
       - ${AAA_HOME}/tempo/tempo.yaml:/etc/tempo.yaml
-      - antonio3a-tempo-data-vol:/var/lib/tempo
+      - antonio3a-grafana-tempo-data-vol:/var/lib/tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
     restart: unless-stopped
 
@@ -47,7 +47,7 @@ networks:
 volumes:
   antonio3a-grafana-data-vol:
     external: true
-  antonio3a-loki-data-vol:
+  antonio3a-grafana-loki-data-vol:
     external: true
-  antonio3a-tempo-data-vol:
+  antonio3a-grafana-tempo-data-vol:
     external: true
