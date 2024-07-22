@@ -33,11 +33,11 @@ services:
     environment:
       VAULT_ADDR: http://vault.antonio3a.aaa:8200
       VAULT_VERSION: 1.17.1
-      VAULT_UNSEAL_KEY_1: fT0Vh8RXHcmsTLmNokdXmHcWBGtGWK+m9m/I+Ee/C75s
-      VAULT_UNSEAL_KEY_2: L1G+om/xj8gQ1UcYfNt8QmkpzekwzKwLsHIREzcxI51a
-      VAULT_UNSEAL_KEY_3: FWsvHcp04C/BF9DsE5zM+m+sT8YmLPJUv+s6xZ7ZHk8/
-      VAULT_UNSEAL_KEY_4: fnFgkOADu18hErPKu/160YD86QJF/aHIMjU7bxswNCLc
-      VAULT_UNSEAL_KEY_5: obz3aVPoKF2CaFgOZf66pQHYixXmlHmuCTpgsvB9X0gR
+      VAULT_UNSEAL_KEY_1:
+      VAULT_UNSEAL_KEY_2:
+      VAULT_UNSEAL_KEY_3:
+      VAULT_UNSEAL_KEY_4:
+      VAULT_UNSEAL_KEY_5:
     volumes:
       - antonio3a-vault-logs-vol:/vault/logs
       - antonio3a-vault-file-vol:/vault/file
