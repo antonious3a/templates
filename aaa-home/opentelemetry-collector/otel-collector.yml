@@ -2,6 +2,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
 processors:
   # batch metrics before sending to reduce API usage
@@ -11,6 +14,9 @@ processors:
     timeout: 10s
 
 exporters:
+  debug:
+    verbosity: detailed
+
   prometheusremotewrite:
     endpoint: "http://prometheus.devops.cpdi:9090/api/v1/write"
 
@@ -47,12 +53,15 @@ service:
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheusremotewrite]
+      #exporters: [prometheusremotewrite]
+      exporters: [debug]
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/jaeger,zipkin,otlp/tempo]
+      #exporters: [otlp/jaeger,zipkin,otlp/tempo]
+      exporters: [debug]
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [loki]
+      #exporters: [loki]
+      exporters: [debug]
