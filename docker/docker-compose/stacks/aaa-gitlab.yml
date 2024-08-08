@@ -19,6 +19,17 @@ services:
     restart: unless-stopped
     #gitlab-rake "gitlab:password:reset[root]"
 
+  gitlab-runner:
+    image: gitlab/gitlab-runner:v17.2.1
+    container_name: antonio3a-gitlab-runner
+    hostname: gitlab-runner.antonio3a.aaa
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - antonio3a-gitlab-runner-config-vol:/etc/gitlab-runner
+    restart: always
+    networks:
+      - antonio3a-network
+
 networks:
   antonio3a-net:
     external: true
@@ -29,4 +40,6 @@ volumes:
   antonio3a-gitlab-config-vol:
     external: true
   antonio3a-gitlab-logs-vol:
+    external: true
+  antonio3a-gitlab-runner-config-vol:
     external: true
