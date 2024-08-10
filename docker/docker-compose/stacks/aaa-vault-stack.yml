@@ -1,13 +1,16 @@
 version: '3.8'
 
+x-common : &common 
+  networks:
+    - antonio3a-network
+  restart: always
+
 services:
   vault:
+    <<: *common 
     image: hashicorp/vault:1.17.1
     container_name: antonio3a-vault
-    restart: unless-stopped
     hostname: vault.antonio3a.aaa
-    networks:
-      - antonio3a-net
     volumes:
       - antonio3a-vault-logs-vol:/vault/logs
       - antonio3a-vault-file-vol:/vault/file
@@ -24,12 +27,10 @@ services:
     #vault operator init
 
   vault-unseal:
+    <<: *common 
     image: blockloop/vault-unseal
     container_name: antonio3a-vault-unseal
-    restart: unless-stopped
     hostname: vault-unseal.antonio3a.aaa
-    networks:
-      - antonio3a-net
     environment:
       VAULT_ADDR: http://vault.antonio3a.aaa:8200
       VAULT_VERSION: 1.17.1
@@ -43,7 +44,7 @@ services:
       - antonio3a-vault-file-vol:/vault/file
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:

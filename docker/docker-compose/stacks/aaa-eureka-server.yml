@@ -1,6 +1,6 @@
 version: '3.8'
 
-x-common-top: &common-top
+x-common : &common 
   image: registry.antonio3a.aaa/aaa/common/discovery-service
   networks:
     - antonio3a-network
@@ -15,7 +15,7 @@ x-common-env: &common-env
 
 services:
   antonio3a-discovery-service-1:
-    <<: *common-top
+    <<: *common 
     container_name: antonio3a-discovery-service-1
     hostname: discovery1.antonio3a.aaa
     environment:
@@ -27,7 +27,7 @@ services:
       - "8761:8761"
 
   antonio3a-discovery-service-2:
-    <<: *common-top
+    <<: *common 
     container_name: antonio3a-discovery-service-2
     hostname: discovery2.antonio3a.aaa
     environment:
@@ -39,7 +39,7 @@ services:
       - "8762:8762"
 
   antonio3a-discovery-service-3:
-    <<: *common-top
+    <<: *common 
     container_name: antonio3a-discovery-service-3
     hostname: discovery3.antonio3a.aaa
     environment:

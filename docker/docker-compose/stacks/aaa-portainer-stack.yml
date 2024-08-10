@@ -14,7 +14,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer-data-vol:/data
     networks:
-      - antonio3a-net
+      - antonio3a-network
 
 
   portainer-agent:
@@ -28,10 +28,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
     networks:
-      - antonio3a-net
+      - antonio3a-network
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:

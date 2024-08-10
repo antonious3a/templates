@@ -1,6 +1,35 @@
 version: '3.8'
 
 services:
+  gitlab:
+    image: gitlab/gitlab-ee:17.1.2-ee.0
+    container_name: antonio3a-gitlab
+    hostname: gitlab.antonio3a.aaa
+    ports:
+      - "22:22"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - antonio3a-gitlab-data-vol:/var/opt/gitlab
+      - antonio3a-gitlab-config-vol:/etc/gitlab
+      - antonio3a-gitlab-logs-vol:/var/log/gitlab
+      - ${AAA_HOME}/ssl:/etc/gitlab/ssl
+    networks:
+      - antonio3a-network
+    restart: unless-stopped
+    #gitlab-rake "gitlab:password:reset[root]"
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:v17.2.1
+    container_name: antonio3a-gitlab-runner
+    hostname: gitlab-runner.antonio3a.aaa
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - antonio3a-gitlab-runner-config-vol:/etc/gitlab-runner
+    restart: always
+    networks:
+      - antonio3a-network
+
   sonarqube:
     image: sonarqube:10.6.0-community
     container_name: antonio3a-sonarqube
@@ -16,7 +45,7 @@ services:
       - antonio3a-sonarqube-logs-vol:/opt/sonarqube/logs
       - antonio3a-sonarqube-extensions-vol:/opt/sonarqube/extensions
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
 
   jenkins:
@@ -29,14 +58,22 @@ services:
     volumes:
       - antonio3a-jenkins-vol:/var/jenkins_home
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:
+  antonio3a-gitlab-data-vol:
+    external: true
+  antonio3a-gitlab-config-vol:
+    external: true
+  antonio3a-gitlab-logs-vol:
+    external: true
+  antonio3a-gitlab-runner-config-vol:
+    external: true
   antonio3a-sonarqube-data-vol:
     external: true
   antonio3a-sonarqube-logs-vol:
@@ -44,6 +81,4 @@ volumes:
   antonio3a-sonarqube-extensions-vol:
     external: true
   antonio3a-jenkins-vol:
-    external: true
-  antonio3a-openproject-data-vol:
     external: true

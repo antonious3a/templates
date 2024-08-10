@@ -9,18 +9,22 @@ services:
       - "9090:9090"
     volumes:
       - ${AAA_HOME}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - antonio3a-prometheus-data-vol:/prometheus
-    networks:
-      - antonio3a-net
-    restart: unless-stopped
+      - antonio3a-prometheus-vol:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
 
+  zipkin:
+    image: openzipkin/zipkin:3.4.0
+    container_name: antonio3a-zipkin
+    hostname: zipkin.antonio3a.aaa
+    ports:
+      - "9411:9411"
+
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:
-  antonio3a-prometheus-data-vol:
+  antonio3a-prometheus-vol:
     external: true

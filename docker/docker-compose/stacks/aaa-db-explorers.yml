@@ -9,7 +9,7 @@ services:
       - "8380:80"
       - "8343:443"
     networks:
-      - antonio3a-net
+      - antonio3a-network
     volumes:
       - antonio3a-pgadmin-data-vol:/var/lib/pgadmin
     environment:
@@ -28,10 +28,10 @@ services:
     volumes:
       - antonio3a-cloudbeaver-data-vol:/opt/cloudbeaver/workspace
     networks:
-      - antonio3a-net
+      - antonio3a-network
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:

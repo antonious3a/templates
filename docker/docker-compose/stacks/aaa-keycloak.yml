@@ -16,7 +16,7 @@ services:
       - "18480:8080"
       - "18443:8443"
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
     command: [
       "/opt/keycloak/bin/kc.sh",
@@ -25,5 +25,5 @@ services:
     ]
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true

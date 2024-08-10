@@ -1,5 +1,10 @@
 version: '3.8'
 
+x-common : &common 
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
+
 services:
   mysql:
     image: mysql:8.4.0
@@ -11,13 +16,11 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - antonio3a-mysql-data-vol:/var/lib/mysql
-    networks:
-      - antonio3a-net
-    restart: unless-stopped
+      - antonio3a-mysql-vol:/var/lib/mysql
+    <<: *common 
 
   postgresql:
-    image: postgis/postgis:16-3.4
+    image: postgres:16.3
     container_name: antonio3a-postgresql
     hostname: postgresql.antonio3a.aaa
     environment:
@@ -27,10 +30,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - antonio3a-postgresql-data-vol:/var/lib/postgresql/data
-    networks:
-      - antonio3a-net
-    restart: unless-stopped
+      - antonio3a-postgresql-vol:/var/lib/postgresql/data
+    <<: *common 
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -44,18 +45,16 @@ services:
       - "1433:1433"
     volumes:
       - antonio3a-sqlserver-data-vol:/var/opt/mssql
-    networks:
-      - antonio3a-net
-    restart: unless-stopped
+    <<: *common 
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:
-  antonio3a-mysql-data-vol:
+  antonio3a-mysql-vol:
     external: true
-  antonio3a-postgresql-data-vol:
+  antonio3a-postgresql-vol:
     external: true
   antonio3a-sqlserver-data-vol:
     external: true

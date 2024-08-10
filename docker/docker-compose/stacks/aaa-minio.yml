@@ -12,16 +12,16 @@ services:
       - "9100:9000"
       - "9101:9001"
     volumes:
-      - antonio3a-minio-data-vol:/data
+      - antonio3a-minio-vol:/data
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
     command: server /data --console-address ":9001"
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:
-  antonio3a-minio-data-vol:
+  antonio3a-minio-vol:
     external: true

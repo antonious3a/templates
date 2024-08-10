@@ -19,7 +19,7 @@ services:
     volumes:
       - antonio3a-kafka-vol:/bitnami/kafka
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
 
   kafka-ui:
@@ -31,7 +31,7 @@ services:
     ports:
       - "8280:8080"
     networks:
-      - antonio3a-net
+      - antonio3a-network
     restart: unless-stopped
 
   rabbitmq:
@@ -43,7 +43,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     networks:
-      - antonio3a-net
+      - antonio3a-network
     environment:
       RABBITMQ_DEFAULT_USER: ${AAA_USER}
       RABBITMQ_DEFAULT_PASS: ${AAA_PASS}
@@ -52,7 +52,7 @@ services:
       - ${AAA_HOME}/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
 
 networks:
-  antonio3a-net:
+  antonio3a-network:
     external: true
 
 volumes:
