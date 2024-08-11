@@ -7,14 +7,14 @@ services:
     hostname: keycloak.antonio3a.aaa
     environment:
       - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/antonio3a_keycloak_db-test
+      - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/antonio3a_keycloak
       - KC_DB_USERNAME=${AAA_USER}
       - KC_DB_PASSWORD=${AAA_PASS}
       - KEYCLOAK_ADMIN=${AAA_USER}
       - KEYCLOAK_ADMIN_PASSWORD=${AAA_PASS}
     ports:
-      - "18480:8080"
-      - "18443:8443"
+      - "8080:8080"
+      - "8443:8443"
     networks:
       - antonio3a-network
     restart: unless-stopped
@@ -23,6 +23,10 @@ services:
       "start-dev",
       "--features=token-exchange",
     ]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
 networks:
   antonio3a-network:
