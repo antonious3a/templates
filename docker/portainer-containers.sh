@@ -2,7 +2,7 @@
 docker run -d \
  --restart unless-stopped \
  --name antonio3a-portainer \
- --net antonio3a-net \
+ --net antonio3a-network \
  --hostname antonio3a-portainer \
  -p 8000:8000 \
  -p 9000:9000 \
