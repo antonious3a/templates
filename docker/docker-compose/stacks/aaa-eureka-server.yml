@@ -1,52 +1,61 @@
 version: '3.8'
 
-x-common : &common 
-  image: registry.antonio3a.aaa/aaa/common/discovery-service
+x-common: &common
+  image: antonio3a/aaa-eureka-server
   networks:
     - antonio3a-network
   restart: always
+  volumes:
+    - ${AAA_HOME}/ssl:/home/cnc/ssl
+    - /etc/ssl/certs:/etc/ssl/certs:ro
 
 x-common-env: &common-env
-  VAULT_URI: ${VAULT_URI}
-  VAULT_TOKEN: ${VAULT_TOKEN}
   EUREKA_ENVIRONMENT: development
   EUREKA_CLIENT_FETCH-REGISTRY: true
   EUREKA_CLIENT_REGISTER-WITH-EUREKA: true
 
+x-common-env-https: &common-env-https
+  EUREKA_ENVIRONMENT: production
+  EUREKA_CLIENT_FETCH-REGISTRY: true
+  EUREKA_CLIENT_REGISTER-WITH-EUREKA: true
+  SERVER_SSL_ENABLED: true
+  SERVER_SSL_CERTIFICATE: /home/cnc/ssl/antonio3a.aaa.crt
+  SERVER_SSL_CERTIFICATE-PRIVATE-KEY: /home/cnc/ssl/antonio3a.aaa.key
+
 services:
-  antonio3a-discovery-service-1:
-    <<: *common 
-    container_name: antonio3a-discovery-service-1
-    hostname: discovery1.antonio3a.aaa
+  antonio3a-eureka-1:
+    <<: *common
+    container_name: antonio3a-eureka-1
+    hostname: eureka1.antonio3a.aaa
     environment:
       <<: *common-env
       SERVER_PORT: 8761
       SPRING_PROFILES_ACTIVE: peer1
-      EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE: http://discovery2.antonio3a.aaa:8762/eureka/,http://discovery3.antonio3a.aaa:8763/eureka/
+      eureka.client.service-url.defaultZone: http://eureka2.antonio3a.aaa:8762/eureka/, http://eureka3.antonio3a.aaa:8763/eureka/
     ports:
       - "8761:8761"
 
-  antonio3a-discovery-service-2:
-    <<: *common 
-    container_name: antonio3a-discovery-service-2
-    hostname: discovery2.antonio3a.aaa
+  antonio3a-eureka-2:
+    <<: *common
+    container_name: antonio3a-eureka-2
+    hostname: eureka2.antonio3a.aaa
     environment:
       <<: *common-env
       SERVER_PORT: 8762
       SPRING_PROFILES_ACTIVE: peer2
-      EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE: http://discovery1.antonio3a.aaa:8761/eureka/,http://discovery3.antonio3a.aaa:8763/eureka/
+      eureka.client.service-url.defaultZone: http://eureka1.antonio3a.aaa:8761/eureka/, http://eureka3.antonio3a.aaa:8763/eureka/
     ports:
       - "8762:8762"
 
-  antonio3a-discovery-service-3:
-    <<: *common 
-    container_name: antonio3a-discovery-service-3
-    hostname: discovery3.antonio3a.aaa
+  antonio3a-eureka-3:
+    <<: *common
+    container_name: antonio3a-eureka-3
+    hostname: eureka3.antonio3a.aaa
     environment:
       <<: *common-env
       SERVER_PORT: 8763
       SPRING_PROFILES_ACTIVE: peer3
-      EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE: http://discovery1.antonio3a.aaa:8761/eureka/,http://discovery2.antonio3a.aaa:8762/eureka/
+      eureka.client.service-url.defaultZone: http://eureka1.antonio3a.aaa:8761/eureka/, http://eureka2.antonio3a.aaa:8762/eureka/
     ports:
       - "8763:8763"
 
