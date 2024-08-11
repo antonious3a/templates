@@ -9,6 +9,9 @@ x-common: &common
     - ${AAA_HOME}/ssl:/home/cnc/ssl
     - /etc/ssl/certs:/etc/ssl/certs:ro
 
+#sudo cp ${AAA_HOME}/ssl/antonio3a.aaa.crt /usr/local/share/ca-certificates/
+#sudo update-ca-certificates
+#https://***
 x-common-env: &common-env
   EUREKA_ENVIRONMENT: development
   EUREKA_CLIENT_FETCH-REGISTRY: true
