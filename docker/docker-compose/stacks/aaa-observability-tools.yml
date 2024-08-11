@@ -1,5 +1,10 @@
 version: '3.8'
 
+x-common : &common
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
+
 services:
   prometheus:
     image: prom/prometheus:v2.53.0
@@ -20,6 +25,34 @@ services:
     hostname: zipkin.antonio3a.aaa
     ports:
       - "9411:9411"
+
+  opentelemetry-collector:
+    image: otel/opentelemetry-collector-contrib:0.105.0
+    container_name: devops-opentelemetry-collector
+    hostname: opentelemetry-collector.devops.cpdi
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus' metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "55679:55679" # zpages extension
+    volumes:
+      - /home/devops/opentelemetry-collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+    command:
+      - --config=/etc/otelcol-contrib/otel-collector.yml
+
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:1.59.0
+    container_name: devops-jaeger
+    hostname: jaeger.devops.cpdi
+    environment:
+      #- COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4317"
 
 networks:
   antonio3a-network:
