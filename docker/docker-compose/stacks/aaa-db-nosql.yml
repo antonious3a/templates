@@ -39,6 +39,7 @@ services:
       - antonio3a-neo4j-data-vol:/data
       - antonio3a-neo4j-logs-vol:/logs
       - antonio3a-neo4j-plugins-vol:/plugins
+      - $AAA_HOME/neo4j/conf/apoc.conf:/var/lib/neo4j/conf/apoc.conf
     <<: *common
     deploy:
       resources:
