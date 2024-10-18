@@ -22,11 +22,11 @@ scrape_configs:
     scrape_timeout: 5s
     metrics_path: /actuator/prometheus
     eureka_sd_configs:
-      - server: http://eureka1.antonio3a.aaa:8761/eureka/
+      - server: http://eureka1.antonio3a.aaa:8761/eureka
         refresh_interval: 3s
-      - server: http://eureka2.antonio3a.aaa:8762/eureka/
+      - server: http://eureka2.antonio3a.aaa:8762/eureka
         refresh_interval: 3s
-      - server: http://eureka3.antonio3a.aaa:8763/eureka/
+      - server: http://eureka3.antonio3a.aaa:8763/eureka
         refresh_interval: 3s
     relabel_configs:
       - source_labels: [ __meta_eureka_app_name ]
