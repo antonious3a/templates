@@ -18,28 +18,28 @@ exporters:
     verbosity: detailed
 
   prometheusremotewrite:
-    endpoint: "http://prometheus.devops.cpdi:9090/api/v1/write"
+    endpoint: "http://prometheus.antonio3a.aaa:9090/api/v1/write"
 
   prometheus:
     endpoint: "0.0.0.0:8889"
     enable_open_metrics: true
 
   otlp/jaeger:
-    endpoint: "http://jaeger.devops.cpdi:4317"
+    endpoint: "http://jaeger.antonio3a.aaa:4317"
     tls:
       insecure: true
 
   zipkin:
-    endpoint: http://zipkin.devops.cpdi:9411/api/v2/spans
+    endpoint: http://zipkin.antonio3a.aaa:9411/api/v2/spans
     format: proto
 
   otlp/tempo:
-    endpoint: "http://tempo.devops.cpdi:4317"
+    endpoint: "http://tempo.antonio3a.aaa:4317"
     tls:
       insecure: true
 
   loki:
-    endpoint: "http://loki.devops.cpdi:3100/loki/api/v1/push"
+    endpoint: "http://loki.antonio3a.aaa:3100/loki/api/v1/push"
 
 extensions:
   health_check:
