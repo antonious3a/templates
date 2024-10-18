@@ -42,6 +42,8 @@ services:
     volumes:
       - antonio3a-vault-logs-vol:/vault/logs
       - antonio3a-vault-file-vol:/vault/file
+    depends_on:
+      - vault
 
 networks:
   antonio3a-network:
