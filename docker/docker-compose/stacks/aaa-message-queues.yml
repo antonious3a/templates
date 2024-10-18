@@ -25,7 +25,7 @@ services:
     <<: *common
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:v0.7.2
     container_name: antonio3a-kafka-ui
     hostname: kafka-ui.antonio3a.aaa
     environment:
@@ -35,12 +35,13 @@ services:
     <<: *common
 
   rabbitmq:
-    image: rabbitmq:3.13.6-management
+    image: rabbitmq:4.0.2-management
     container_name: antonio3a-rabbitmq
     hostname: rabbitmq.antonio3a.aaa
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "61613:61613"
     environment:
       RABBITMQ_DEFAULT_USER: ${AAA_USER}
       RABBITMQ_DEFAULT_PASS: ${AAA_PASS}

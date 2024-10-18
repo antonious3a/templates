@@ -5,25 +5,11 @@ x-common: &common
   networks:
     - antonio3a-network
   restart: always
-  volumes:
-    - ${AAA_HOME}/ssl:/home/cnc/ssl
-    - /etc/ssl/certs:/etc/ssl/certs:ro
 
-#sudo cp ${AAA_HOME}/ssl/antonio3a.aaa.crt /usr/local/share/ca-certificates/
-#sudo update-ca-certificates
-#https://***
 x-common-env: &common-env
   EUREKA_ENVIRONMENT: development
   EUREKA_CLIENT_FETCH-REGISTRY: true
   EUREKA_CLIENT_REGISTER-WITH-EUREKA: true
-
-x-common-env-https: &common-env-https
-  EUREKA_ENVIRONMENT: production
-  EUREKA_CLIENT_FETCH-REGISTRY: true
-  EUREKA_CLIENT_REGISTER-WITH-EUREKA: true
-  SERVER_SSL_ENABLED: true
-  SERVER_SSL_CERTIFICATE: /home/cnc/ssl/antonio3a.aaa.crt
-  SERVER_SSL_CERTIFICATE-PRIVATE-KEY: /home/cnc/ssl/antonio3a.aaa.key
 
 services:
   antonio3a-eureka-1:

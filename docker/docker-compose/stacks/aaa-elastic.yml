@@ -1,8 +1,14 @@
 version: '3.8'
 
+x-common: &common
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
+
 services:
   elasticsearch:
-    image: elasticsearch:8.14.1
+    <<: *common
+    image: elasticsearch:${ELASTIC_VERSION}
     container_name: antonio3a-elasticsearch
     hostname: elasticsearch.antonio3a.aaa
     environment:
@@ -11,18 +17,16 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-    networks:
-      - antonio3a-network
     volumes:
       - antonio3a-elasticsearch-data-vol:/usr/share/elasticsearch/data
-    restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 5G
 
   logstash:
-    image: logstash:8.14.1
+    <<: *common
+    image: logstash:${ELASTIC_VERSION}
     container_name: antonio3a-logstash
     hostname: logstash.antonio3a.aaa
     volumes:
@@ -31,23 +35,18 @@ services:
     ports:
       - "5000:5000"
       - "9600:9600"
-    networks:
-      - antonio3a-network
-    restart: unless-stopped
     depends_on:
       - elasticsearch
 
   kibana:
-    image: kibana:8.14.1
+    <<: *common
+    image: kibana:${ELASTIC_VERSION}
     container_name: antonio3a-kibana
     hostname: kibana.antonio3a.aaa
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch.antonio3a.aaa:9200
     ports:
       - "5701:5601"
-    networks:
-      - antonio3a-network
-    restart: unless-stopped
     depends_on:
       - elasticsearch
 

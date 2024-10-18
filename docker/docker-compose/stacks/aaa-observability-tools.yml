@@ -7,7 +7,8 @@ x-common : &common
 
 services:
   prometheus:
-    image: prom/prometheus:v2.53.0
+    <<: *common
+    image: prom/prometheus:v2.54.1
     container_name: antonio3a-prometheus
     hostname: prometheus.antonio3a.aaa
     ports:
@@ -19,15 +20,9 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
 
-  zipkin:
-    image: openzipkin/zipkin:3.4.0
-    container_name: antonio3a-zipkin
-    hostname: zipkin.antonio3a.aaa
-    ports:
-      - "9411:9411"
-
   opentelemetry-collector:
-    image: otel/opentelemetry-collector-contrib:0.105.0
+    <<: *common
+    image: otel/opentelemetry-collector-contrib:0.111.0
     container_name: devops-opentelemetry-collector
     hostname: opentelemetry-collector.devops.cpdi
     ports:
@@ -44,7 +39,8 @@ services:
       - --config=/etc/otelcol-contrib/otel-collector.yml
 
   jaeger-all-in-one:
-    image: jaegertracing/all-in-one:1.59.0
+    <<: *common
+    image: jaegertracing/all-in-one:1.62.0
     container_name: devops-jaeger
     hostname: jaeger.devops.cpdi
     environment:
@@ -52,7 +48,6 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
       - "16686:16686"
-      - "4317"
 
 networks:
   antonio3a-network:

@@ -1,34 +1,35 @@
 version: '3.8'
 
+x-common: &common
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
+
 services:
   pgadmin:
-    image: dpage/pgadmin4:8.8
+    <<: *common
+    image: dpage/pgadmin4:8.12.0
     container_name: antonio3a-pgadmin
     hostname: pgadmin.antonio3a.aaa
     ports:
       - "8380:80"
       - "8343:443"
-    networks:
-      - antonio3a-network
     volumes:
       - antonio3a-pgadmin-data-vol:/var/lib/pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=antonio3a@antonio3a.aaa
       - PGADMIN_DEFAULT_PASSWORD=${AAA_PASS}
       - PGADMIN_DEFAULT_USERNAME=${AAA_USER}
-    restart: unless-stopped
 
   cloudbeaver:
+    <<: *common
     container_name: antonio3a-cloudbeaver
     hostname: cloudbeaver.antonio3a.aaa
     image: dbeaver/cloudbeaver:24.1.1
-    restart: unless-stopped
     ports:
       - "8978:8978"
     volumes:
       - antonio3a-cloudbeaver-data-vol:/opt/cloudbeaver/workspace
-    networks:
-      - antonio3a-network
 
 networks:
   antonio3a-network:

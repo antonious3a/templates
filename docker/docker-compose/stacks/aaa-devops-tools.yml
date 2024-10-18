@@ -1,8 +1,14 @@
 version: '3.8'
 
+x-common: &common
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
+
 services:
   gitlab:
-    image: gitlab/gitlab-ee:17.1.2-ee.0
+    <<: *common
+    image: gitlab/gitlab-ee:17.5.0-ee.0
     container_name: antonio3a-gitlab
     hostname: gitlab.antonio3a.aaa
     ports:
@@ -14,24 +20,20 @@ services:
       - antonio3a-gitlab-config-vol:/etc/gitlab
       - antonio3a-gitlab-logs-vol:/var/log/gitlab
       - ${AAA_HOME}/ssl:/etc/gitlab/ssl
-    networks:
-      - antonio3a-network
-    restart: unless-stopped
     #gitlab-rake "gitlab:password:reset[root]"
 
   gitlab-runner:
-    image: gitlab/gitlab-runner:v17.2.1
+    <<: *common
+    image: gitlab/gitlab-runner:v17.5.0
     container_name: antonio3a-gitlab-runner
     hostname: gitlab-runner.antonio3a.aaa
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - antonio3a-gitlab-runner-config-vol:/etc/gitlab-runner
-    restart: always
-    networks:
-      - antonio3a-network
 
   sonarqube:
-    image: sonarqube:10.6.0-community
+    <<: *common
+    image: sonarqube:10.7.0-community
     container_name: antonio3a-sonarqube
     hostname: sonarqube.antonio3a.aaa
     environment:
@@ -44,12 +46,10 @@ services:
       - antonio3a-sonarqube-data-vol:/opt/sonarqube/data
       - antonio3a-sonarqube-logs-vol:/opt/sonarqube/logs
       - antonio3a-sonarqube-extensions-vol:/opt/sonarqube/extensions
-    networks:
-      - antonio3a-network
-    restart: unless-stopped
 
   jenkins:
-    image: jenkins/jenkins:lts-alpine-jdk21
+    <<: *common
+    image: jenkins/jenkins:2.481-jdk21
     container_name: antonio3a-jenkins
     hostname: jenkins.antonio3a.aaa
     ports:
@@ -57,9 +57,6 @@ services:
       - "50000:50000"
     volumes:
       - antonio3a-jenkins-vol:/var/jenkins_home
-    networks:
-      - antonio3a-network
-    restart: unless-stopped
 
 networks:
   antonio3a-network:

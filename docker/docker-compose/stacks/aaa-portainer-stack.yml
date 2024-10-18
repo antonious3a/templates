@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   portainer:
-    image: portainer/portainer-ce:2.20.3-alpine
+    image: portainer/portainer-ce:2.21.3
     container_name: antonio3a-portainer
     hostname: portainer.antonio3a.aaa
     restart: always
@@ -16,11 +16,10 @@ services:
     networks:
       - antonio3a-network
 
-
   portainer-agent:
-    image: portainer/agent:2.20.3-alpine
+    image: portainer/agent:2.21.3
     container_name: antonio3a-portainer-agent
-    hostname: agent.antonio3a.aaa
+    hostname: portainer-agent.antonio3a.aaa
     restart: always
     ports:
       - "9001:9001"

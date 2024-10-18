@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   openproject:
-    image: openproject/openproject:14.3.0
+    image: openproject/openproject:14.6.1
     container_name: antonio3a-openproject
     hostname: openproject.antonio3a.aaa
     restart: always

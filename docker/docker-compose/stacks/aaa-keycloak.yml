@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   keycloak:
-    image: keycloak/keycloak:25.0.1-0
+    image: keycloak/keycloak:26.0.1-0
     container_name: antonio3a-keycloak-TEST
     hostname: keycloak.antonio3a.aaa
     environment:
@@ -17,7 +17,7 @@ services:
       - "8443:8443"
     networks:
       - antonio3a-network
-    restart: unless-stopped
+    restart: always
     command: [
       "/opt/keycloak/bin/kc.sh",
       "start-dev",
