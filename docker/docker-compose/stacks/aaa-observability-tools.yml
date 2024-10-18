@@ -34,7 +34,7 @@ services:
       - "4318:4318"   # OTLP HTTP receiver
       - "55679:55679" # zpages extension
     volumes:
-      - /home/devops/opentelemetry-collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+      - ${AAA_HOME}/opentelemetry-collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
     command:
       - --config=/etc/otelcol-contrib/otel-collector.yml
 
