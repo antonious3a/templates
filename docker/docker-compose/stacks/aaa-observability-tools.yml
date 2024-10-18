@@ -3,7 +3,7 @@ version: '3.8'
 x-common : &common
   networks:
     - antonio3a-network
-  restart: unless-stopped
+  restart: always
 
 services:
   prometheus:
@@ -23,8 +23,8 @@ services:
   opentelemetry-collector:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
-    container_name: devops-opentelemetry-collector
-    hostname: opentelemetry-collector.devops.cpdi
+    container_name: antonio3a-opentelemetry-collector
+    hostname: opentelemetry-collector.antonio3a.aaa
     ports:
       - "1888:1888"   # pprof extension
       - "8888:8888"   # Prometheus' metrics exposed by the collector
@@ -41,8 +41,8 @@ services:
   jaeger-all-in-one:
     <<: *common
     image: jaegertracing/all-in-one:1.62.0
-    container_name: devops-jaeger
-    hostname: jaeger.devops.cpdi
+    container_name: antonio3a-jaeger
+    hostname: jaeger.antonio3a.aaa
     environment:
       #- COLLECTOR_ZIPKIN_HTTP_PORT=9411
       - COLLECTOR_OTLP_ENABLED=true
