@@ -3,7 +3,7 @@ version: '3.8'
 services:
   keycloak:
     image: keycloak/keycloak:26.0.1-0
-    container_name: antonio3a-keycloak-TEST
+    container_name: antonio3a-keycloak
     hostname: keycloak.antonio3a.aaa
     environment:
       - KC_DB=postgres
@@ -19,7 +19,6 @@ services:
       - antonio3a-network
     restart: always
     command: [
-      "/opt/keycloak/bin/kc.sh",
       "start-dev",
       "--features=token-exchange",
     ]
