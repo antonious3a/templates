@@ -12,23 +12,21 @@ scrape_configs:
       - targets:
           - localhost:9090
 
-  - job_name: node-exporter
-    static_configs:
-      - targets: ['cpdi-devops-main:9110']
   - job_name: docker
     static_configs:
-      - targets: ["cpdi-devops-main:9323"]
+      - targets:
+        - 3A-PCHP-EB845G7:9323
 
-  - job_name: "micro-services"
+  - job_name: eureka-servers
     scrape_interval: 5s
     scrape_timeout: 5s
     metrics_path: /actuator/prometheus
     eureka_sd_configs:
-      - server: http://eureka1.devops.cpdi:8761/eureka
+      - server: http://eureka1.antonio3a.aaa:8761/eureka/
         refresh_interval: 3s
-      - server: http://eureka2.devops.cpdi:8761/eureka
+      - server: http://eureka2.antonio3a.aaa:8762/eureka/
         refresh_interval: 3s
-      - server: http://eureka3.devops.cpdi:8761/eureka
+      - server: http://eureka3.antonio3a.aaa:8763/eureka/
         refresh_interval: 3s
     relabel_configs:
       - source_labels: [ __meta_eureka_app_name ]
