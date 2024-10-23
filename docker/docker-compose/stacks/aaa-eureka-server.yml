@@ -1,5 +1,3 @@
-version: '3.8'
-
 x-common: &common
   image: antonio3a/aaa-eureka-server
   networks:
