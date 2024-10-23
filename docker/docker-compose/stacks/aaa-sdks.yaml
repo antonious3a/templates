@@ -1,0 +1,16 @@
+networks:
+  antonio3a-network:
+    external: true
+
+services:
+  java-21:
+    platform: linux/x86_64
+    build:
+      context: https://github.com/antonious3a/templates.git
+      dockerfile: docker/Dockerfiles/java-21/Dockerfile
+    environment:
+      VAULT_URI: ${VAULT_URI}
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      LOKI_APPENDER_URL: ${LOKI_APPENDER_URL}
+    networks:
+      - antonio3a-network
