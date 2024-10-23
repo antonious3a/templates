@@ -22,7 +22,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 5G
+          memory: 1G
 
   logstash:
     <<: *common
