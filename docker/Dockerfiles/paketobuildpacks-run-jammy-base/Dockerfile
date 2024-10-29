@@ -1,4 +1,4 @@
-FROM paketobuildpacks/run-jammy-base:0.1.125
+FROM paketobuildpacks/run-jammy-base:latest
 LABEL authors="antonio3a"
 
 USER root
