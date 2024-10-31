@@ -8,7 +8,7 @@ RUN apk update \
     curl \
     fontconfig \
     freetype \
-    && rm -rf /var/cache/apk/*
+    ttf-dejavu
 
 USER cnb
 
