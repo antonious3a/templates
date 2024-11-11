@@ -3,10 +3,24 @@ server:
 
 distributor:
   receivers:
+    opencensus:
     zipkin:
+    otlp:
+      protocols:
+        http:
+        grpc:
+    jaeger:
+      protocols:
+        thrift_http:
+        grpc:
+        thrift_binary:
+        thrift_compact:
+
 
 storage:
   trace:
     backend: local
+    wal:
+      path: /var/tempo/wal
     local:
-      path: /var/lib/tempo
+      path: /var/tempo/blocks
