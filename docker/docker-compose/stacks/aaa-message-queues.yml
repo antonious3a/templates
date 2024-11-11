@@ -33,7 +33,7 @@ services:
     <<: *common
 
   rabbitmq:
-    image: rabbitmq:4.0.2-management
+    image: rabbitmq:4.0.3-management
     container_name: antonio3a-rabbitmq
     hostname: rabbitmq.antonio3a.aaa
     ports:

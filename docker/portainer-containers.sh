@@ -9,7 +9,7 @@ docker run -d \
  -p 9443:9443 \
  -v /var/run/docker.sock:/var/run/docker.sock \
  -v antonio3a-portainer-data-vol:/data \
- portainer/portainer-ce:2.21.3
+ portainer/portainer-ce:2.21.4
 
 
  # Portainer agent

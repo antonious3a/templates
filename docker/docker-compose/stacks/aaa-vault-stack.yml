@@ -6,7 +6,7 @@ x-common : &common
 services:
   vault:
     <<: *common 
-    image: hashicorp/vault:1.18.0
+    image: hashicorp/vault:1.18.1
     container_name: antonio3a-vault
     hostname: vault.antonio3a.aaa
     volumes:
@@ -31,7 +31,7 @@ services:
     hostname: vault-unseal.antonio3a.aaa
     environment:
       VAULT_ADDR: http://vault.antonio3a.aaa:8200
-      VAULT_VERSION: 1.18.0
+      VAULT_VERSION: 1.18.1
       VAULT_UNSEAL_KEY_1:
       VAULT_UNSEAL_KEY_2:
       VAULT_UNSEAL_KEY_3:
