@@ -1,2 +1,12 @@
-version: '3'
+x-common : &common
+  networks:
+    - antonio3a-network
+  restart: unless-stopped
 
+services:
+  
+networks:
+  antonio3a-network:
+    external: true
+
+volumes:
