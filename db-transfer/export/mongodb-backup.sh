@@ -3,6 +3,7 @@
 REMOTE_HOST="172.16.33.56"
 REMOTE_PORT="27017"
 BACKUP_DIR="/backups/mongodb"
+EXTRA_BACKUP_DIR="/mnt/ssd1/backups/mongodb"
 DATE=$(date +"%Y%m%d_%H%M%S")
 
 if [ -z "$MONGO_USER" ] || [ -z "$MONGO_PASSWORD" ]; then
@@ -11,6 +12,7 @@ if [ -z "$MONGO_USER" ] || [ -z "$MONGO_PASSWORD" ]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
+mkdir -p "$EXTRA_BACKUP_DIR"
 
 echo "Getting databases..."
 DATABASES=$(mongosh --host $REMOTE_HOST --port $REMOTE_PORT -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticationDatabase admin --quiet --eval "db.adminCommand('listDatabases').databases.map(function(db) { return db.name; }).filter(function(name) { return ['admin', 'local', 'config'].indexOf(name) === -1; }).join(' ')")
@@ -20,8 +22,8 @@ if [ -z "$DATABASES" ]; then
   exit 1
 fi
 
-DB_BACKUP_DIR="$BACKUP_DIR"/"$DATE"
-mkdir -p "$DB_BACKUP_DIR"
+DBS_BACKUP_DIR="$BACKUP_DIR"/"$DATE"
+mkdir -p "$DBS_BACKUP_DIR"
 
 START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 START_TIMESTAMP=$(date +%s)
@@ -31,12 +33,11 @@ echo "Starting backups..."
 for DB in $DATABASES; do
   echo "Making backup of db: $DB"
 
-  if mongodump --host $REMOTE_HOST --port $REMOTE_PORT -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticationDatabase admin --db "$DB" --gzip --out "$DB_BACKUP_DIR"; then
-    echo "Backup of $DB completed successfully, dir: $DB_BACKUP_DIR/$DB"
+  if mongodump --host $REMOTE_HOST --port $REMOTE_PORT -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticationDatabase admin --db "$DB" --gzip --out "$DBS_BACKUP_DIR"; then
+    echo "Backup of $DB completed successfully, dir: $DBS_BACKUP_DIR/$DB"
   else
     echo "Error making backup of db $DB."
   fi
-
 done
 
 END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
@@ -45,14 +46,22 @@ DURATION=$((END_TIMESTAMP - START_TIMESTAMP))
 
 echo "Backups finished at $END_TIME"
 
-BACKUPS_TO_DELETE=$(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -3)
-if [ -n "$BACKUPS_TO_DELETE" ]; then
-  echo "Deleting old backups"
-  for DIR in $BACKUPS_TO_DELETE; do
-    echo "Deleting $DIR"
-    rm -r "$DIR"
-  done
-fi
+cp -rp "$DBS_BACKUP_DIR" "$EXTRA_BACKUP_DIR"
+
+delete_old_backups() {
+  local DEL_BACKUP_DIR=$1
+  BACKUPS_TO_DELETE=$(find "$DEL_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -3)
+  if [ -n "$BACKUPS_TO_DELETE" ]; then
+    echo "Deleting old backups"
+    for DIR in $BACKUPS_TO_DELETE; do
+      echo "Deleting $DIR"
+      rm -r "$DIR"
+    done
+  fi
+}
+
+delete_old_backups "$BACKUP_DIR"
+delete_old_backups "$EXTRA_BACKUP_DIR"
 
 HOURS=$((DURATION / 3600))
 MINUTES=$((DURATION % 3600 / 60))

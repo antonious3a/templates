@@ -3,6 +3,7 @@
 REMOTE_HOST="172.16.33.56"
 REMOTE_PORT="5432"
 BACKUP_DIR="/backups/postgresql"
+EXTRA_BACKUP_DIR="/mnt/ssd1/backups/postgresql"
 DATE=$(date +"%Y%m%d_%H%M%S")
 
 if [ -z "$PG_USER" ] || [ -z "$PG_PASSWORD" ]; then
@@ -11,6 +12,7 @@ if [ -z "$PG_USER" ] || [ -z "$PG_PASSWORD" ]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
+mkdir -p "$EXTRA_BACKUP_DIR"
 
 echo "Getting databases..."
 DATABASES=$(PGPASSWORD=$PG_PASSWORD psql -h $REMOTE_HOST -p $REMOTE_PORT -U "$PG_USER" -t -c "SELECT datname FROM pg_database WHERE datistemplate = false;")
@@ -45,15 +47,22 @@ DURATION=$((END_TIMESTAMP - START_TIMESTAMP))
 
 echo "Backups finished at $END_TIME"
 
-BACKUPS_TO_DELETE=$(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -3)
-if [ -n "$BACKUPS_TO_DELETE" ]; then
-  echo "Deleting old backups"
-  for DIR in $BACKUPS_TO_DELETE; do
-    echo "Deleting $DIR"
-    rm -r "$DIR"
-  done
-fi
+cp -rp "$DBS_BACKUP_DIR" "$EXTRA_BACKUP_DIR"
 
+delete_old_backups() {
+  local DEL_BACKUP_DIR=$1
+  BACKUPS_TO_DELETE=$(find "$DEL_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -3)
+  if [ -n "$BACKUPS_TO_DELETE" ]; then
+    echo "Deleting old backups"
+    for DIR in $BACKUPS_TO_DELETE; do
+      echo "Deleting $DIR"
+      rm -r "$DIR"
+    done
+  fi
+}
+
+delete_old_backups "$BACKUP_DIR"
+delete_old_backups "$EXTRA_BACKUP_DIR"
 
 HOURS=$((DURATION / 3600))
 MINUTES=$((DURATION % 3600 / 60))
