@@ -32,7 +32,7 @@ echo "Backup started at $START_TIME"
 echo "Starting backups..."
 for DB in $DATABASES; do
   echo "Making backup of db: $DB"
-  BACKUP_FILE="${DBS_BACKUP_DIR}/${DB}.sql"
+  BACKUP_FILE="${DBS_BACKUP_DIR}/${DB}/${DB}.sql"
 
   if PGPASSWORD=$PG_PASSWORD pg_dump -h $REMOTE_HOST -p $REMOTE_PORT -U "$PG_USER" -d "$DB" -F c -f "$BACKUP_FILE"; then
     echo "Backup of $DB completed successfully, file: $BACKUP_FILE"
