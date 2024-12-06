@@ -32,7 +32,7 @@ echo "Restoring databases from $RESTORE_PATH"
 for DB_BACKUP_DIR in "$RESTORE_PATH"/*; do
   if [ -d "$DB_BACKUP_DIR" ]; then
     DB=$(basename "$DB_BACKUP_DIR")
-    BACKUP_FILE=$(find "$DB_BACKUP_DIR"/*.sql -type f | sort | head -n 1)
+    BACKUP_FILE="$DB_BACKUP_DIR/$DB.sql"
 
     if [ -z "$BACKUP_FILE" ]; then
       echo "Warning: No backup file found for database $DB."
