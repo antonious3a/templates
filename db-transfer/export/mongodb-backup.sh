@@ -3,7 +3,7 @@
 REMOTE_HOST="172.16.33.56"
 REMOTE_PORT="27017"
 BACKUP_DIR="/backups/mongodb"
-EXTRA_BACKUP_DIR="/mnt/ssd1/backups/mongodb"
+EXTRA_BACKUP_DIR="/backups/copy/mongodb"
 DATE=$(date +"%Y%m%d_%H%M%S")
 
 if [ -z "$MONGO_USER" ] || [ -z "$MONGO_PASSWORD" ]; then
