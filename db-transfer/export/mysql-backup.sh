@@ -57,6 +57,7 @@ END_TIMESTAMP=$(date +%s)
 DURATION=$((END_TIMESTAMP - START_TIMESTAMP))
 
 echo "Backups finished at $END_TIME"
+rm ~/.mysql.cnf
 
 cp -rp "$DBS_BACKUP_DIR" "$EXTRA_BACKUP_DIR"
 
