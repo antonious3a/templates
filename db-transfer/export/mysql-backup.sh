@@ -11,11 +11,20 @@ if [ -z "$MYSQL_USER" ] || [ -z "$MYSQL_PASSWORD" ]; then
   exit 1
 fi
 
+cat <<EOF > ~/.mysql.cnf
+[client]
+user=$MYSQL_USER
+password=$MYSQL_PASSWORD
+host=$REMOTE_HOST
+port=$REMOTE_PORT
+EOF
+chmod 600 ~/.mysql.cnf
+
 mkdir -p "$BACKUP_DIR"
 mkdir -p "$EXTRA_BACKUP_DIR"
 
 echo "Getting databases..."
-DATABASES=$(mysql -h "$REMOTE_HOST" -P "$REMOTE_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;" | grep -Ev "^(Database|information_schema|performance_schema|mysql|sys)$")
+DATABASES=$(mysql --defaults-file=~/.mysql.cnf -e "SHOW DATABASES;" | grep -Ev "^(Database|information_schema|performance_schema|mysql|sys)$")
 
 if [ -z "$DATABASES" ]; then
   echo "Error: no databases found or error in connection"
@@ -36,7 +45,7 @@ for DB in $DATABASES; do
   mkdir -p "$DB_BACKUP_DIR"
   BACKUP_FILE="${DB_BACKUP_DIR}/${DB}.sql"
 
-  if mysqldump -h "$REMOTE_HOST" -P "$REMOTE_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$DB" > "$BACKUP_FILE"; then
+  if mysqldump  --defaults-file=~/.mysql.cnf "$DB" > "$BACKUP_FILE"; then
     echo "Backup of $DB completed successfully, file: $BACKUP_FILE"
   else
     echo "Error making backup of db $DB."
