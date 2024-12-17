@@ -3,7 +3,7 @@
 REMOTE_HOST="172.16.33.56"
 REMOTE_PORT="1433"
 BACKUP_DIR="/backups/sqlserver"
-EXTRA_BACKUP_DIR="/backups/copy/postgresql"
+EXTRA_BACKUP_DIR="/backups/copy/sqlserver"
 DATE=$(date +"%Y%m%d_%H%M%S")
 
 if [ -z "$SQL_USER" ] || [ -z "$SQL_PASSWORD" ]; then
