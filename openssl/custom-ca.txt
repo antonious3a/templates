@@ -1,0 +1,83 @@
+mkdir -p ~/antonio3a-ca/{certs,crl,newcerts,private}
+chmod 700 ~/antonio3a-ca/private
+touch ~/antonio3a-ca/index.txt
+echo 1000 > ~/antonio3a-ca/serial
+
+
+### touch ~/antonio3a-ca/openssl.cnf
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir             = /home/antonio3a/antonio3a-ca
+certs           = $dir/certs
+crl_dir         = $dir/crl
+new_certs_dir   = $dir/newcerts
+database        = $dir/index.txt
+serial          = $dir/serial
+private_key     = $dir/private/ca.key
+certificate     = $dir/certs/ca.crt
+default_md      = sha256
+policy          = policy_loose
+default_days    = 36500
+rand_serial     = yes
+email_in_dn     = yes
+
+[ policy_loose ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+default_bits        = 4096
+default_keyfile     = privkey.pem
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+
+[ req_distinguished_name ]
+countryName                     = Country Name (2-letter code)
+stateOrProvinceName             = State or Province Name (full name)
+localityName                    = Locality Name (e.g., city)
+organizationName                = Organization Name (e.g., company)
+commonName                      = Common Name (e.g., server FQDN or YOUR name)
+emailAddress                    = Email Address
+######################################################
+
+
+openssl genrsa -out ~/antonio3a-ca/private/ca.key 4096
+openssl req -x509 -new -nodes -key ~/antonio3a-ca/private/ca.key -sha256 -days 36500 \
+    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=António António" \
+    -out ~/antonio3a-ca/certs/ca.crt
+
+
+
+
+
+openssl genrsa -out app.antonio3a.aaa.key 2048
+openssl req -new -key app.antonio3a.aaa.key \
+    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=app.antonio3a.aaa" \
+    -out app.antonio3a.aaa.csr
+
+### touch app.antonio3a.aaa.ext
+[ v3_req ]
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = @alt_names
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+basicConstraints = CA:FALSE
+
+[ alt_names ]
+DNS.1 = app.antonio3a.aaa
+DNS.2 = sub.app.antonio3a.aaa
+######################################################
+
+openssl ca -config ~/antonio3a-ca/openssl.cnf \
+    -extensions v3_req \
+    -days 36500 -notext -md sha256 \
+    -in app.antonio3a.aaa.csr \
+    -out app.antonio3a.aaa.crt \
+    -extfile app.antonio3a.aaa.ext
