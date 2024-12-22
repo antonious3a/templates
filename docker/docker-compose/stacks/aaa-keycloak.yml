@@ -1,6 +1,6 @@
 services:
   keycloak:
-    image: keycloak/keycloak:26.0.1-0
+    image: keycloak/keycloak:26.0.7-0
     container_name: antonio3a-keycloak
     hostname: keycloak.antonio3a.aaa
     environment:

@@ -18,7 +18,7 @@ services:
     <<: *common 
 
   postgresql:
-    image: postgres:16.4
+    image: postgres:16.6
     container_name: antonio3a-postgresql
     hostname: postgresql.antonio3a.aaa
     environment:

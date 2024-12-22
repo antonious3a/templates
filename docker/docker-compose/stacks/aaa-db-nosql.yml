@@ -5,7 +5,7 @@ x-common : &common
 
 services:
   mongodb:
-    image: mongo:8.0.3-noble
+    image: mongo:8.0.4
     container_name: antonio3a-mongodb
     hostname: mongodb.antonio3a.aaa
     environment:
@@ -19,7 +19,7 @@ services:
     <<: *common 
 
   neo4j:
-    image: neo4j:5.24.2-enterprise
+    image: neo4j:5.26.0-enterprise
     container_name: antonio3a-neo4j
     hostname: neo4j.antonio3a.aaa
     environment:
