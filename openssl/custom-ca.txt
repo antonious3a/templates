@@ -73,6 +73,8 @@ basicConstraints = CA:FALSE
 [ alt_names ]
 DNS.1 = app.antonio3a.aaa
 DNS.2 = sub.app.antonio3a.aaa
+IP.1 = 172.16.0.1
+IP.2 = 172.16.0.2
 ######################################################
 
 openssl ca -config ~/antonio3a-ca/openssl.cnf \
