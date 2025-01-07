@@ -56,8 +56,9 @@ openssl req -x509 -new -nodes -key ~/antonio3a-ca/private/ca.key -sha256 -days 3
 
 
 
-
-openssl genrsa -out app.antonio3a.aaa.key 2048
+mkdir app.antonio3a.aaa
+cd app.antonio3a.aaa
+openssl genrsa -out app.antonio3a.aaa.key 4096
 openssl req -new -key app.antonio3a.aaa.key \
     -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=app.antonio3a.aaa" \
     -out app.antonio3a.aaa.csr
