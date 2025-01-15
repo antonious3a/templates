@@ -1,6 +1,6 @@
 x-common : &common
   networks:
-    - antonio3a-network
+    - antonio3a-bridge
   restart: unless-stopped
 
 services:
@@ -18,13 +18,13 @@ services:
     <<: *common 
 
   postgresql:
-    image: postgres:16.6
+    image: postgres:17.2
     container_name: antonio3a-postgresql
     hostname: postgresql.antonio3a.aaa
     environment:
       - POSTGRES_USER=${AAA_USER}
       - POSTGRES_PASSWORD=${AAA_PASS}
-      - POSTGRES_DB=${AAA_USER}_db
+      - POSTGRES_DB=${AAA_USER}
     ports:
       - "5432:5432"
     volumes:
@@ -42,11 +42,11 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - antonio3a-sqlserver-data-vol:/var/opt/mssql
+      - antonio3a-sqlserver-vol:/var/opt/mssql
     <<: *common 
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 volumes:

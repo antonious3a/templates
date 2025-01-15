@@ -14,7 +14,7 @@ services:
       - "8080:8080"
       - "8443:8443"
     networks:
-      - antonio3a-network
+      - antonio3a-bridge
     restart: always
     command: [
       "start-dev",
@@ -26,5 +26,5 @@ services:
           memory: 1G
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true

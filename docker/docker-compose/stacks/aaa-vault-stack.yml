@@ -1,6 +1,6 @@
 x-common : &common
   networks:
-    - antonio3a-network
+    - antonio3a-bridge
   restart: always
 
 services:
@@ -44,7 +44,7 @@ services:
       - vault
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 volumes:

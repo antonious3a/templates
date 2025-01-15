@@ -1,6 +1,6 @@
 x-common : &common
   networks:
-    - antonio3a-network
+    - antonio3a-bridge
   restart: always
 
 services:
@@ -48,7 +48,7 @@ services:
       - "16686:16686"
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 volumes:

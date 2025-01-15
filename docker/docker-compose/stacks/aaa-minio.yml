@@ -12,12 +12,12 @@ services:
     volumes:
       - antonio3a-minio-vol:/data
     networks:
-      - antonio3a-network
+      - antonio3a-bridge
     restart: always
     command: server /data --console-address ":9001"
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 volumes:

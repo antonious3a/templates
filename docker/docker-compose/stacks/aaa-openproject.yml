@@ -15,10 +15,10 @@ services:
     volumes:
       - antonio3a-openproject-data-vol:/var/openproject/assets
     networks:
-      - antonio3a-network
+      - antonio3a-bridge
 
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 volumes:

@@ -1,5 +1,5 @@
 networks:
-  antonio3a-network:
+  antonio3a-bridge:
     external: true
 
 services:
@@ -14,4 +14,4 @@ services:
       VAULT_TOKEN: ${VAULT_TOKEN}
       LOKI_APPENDER_URL: ${LOKI_APPENDER_URL}
     networks:
-      - antonio3a-network
+      - antonio3a-bridge
