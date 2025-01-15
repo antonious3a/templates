@@ -1,6 +1,6 @@
 services:
   keycloak:
-    image: keycloak/keycloak:26.0.7-0
+    image: keycloak/keycloak:26.1.0-0
     container_name: antonio3a-keycloak
     hostname: keycloak.antonio3a.aaa
     environment:
@@ -8,8 +8,8 @@ services:
       - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/antonio3a_keycloak
       - KC_DB_USERNAME=${AAA_USER}
       - KC_DB_PASSWORD=${AAA_PASS}
-      - KEYCLOAK_ADMIN=${AAA_USER}
-      - KEYCLOAK_ADMIN_PASSWORD=${AAA_PASS}
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${AAA_USER}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${AAA_PASS}
     ports:
       - "8080:8080"
       - "8443:8443"
