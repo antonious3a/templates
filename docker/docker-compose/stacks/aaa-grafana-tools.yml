@@ -1,19 +1,9 @@
 x-common : &common
   networks:
     - antonio3a-bridge
-  restart: unless-stopped
+  restart: always
 
 services:
-  init:
-    image: grafana/tempo:2.6.1
-    user: root
-    entrypoint:
-      - "chown"
-      - "10001:10001"
-      - "/var/tempo"
-    volumes:
-      - antonio3a-grafana-tempo-vol:/var/tempo
-
   grafana:
     <<: *common
     image: grafana/grafana:11.4.0
@@ -36,7 +26,7 @@ services:
 
   tempo:
     <<: *common
-    image: grafana/tempo:2.6.1
+    image: grafana/tempo:2.7.0
     container_name: antonio3a-tempo
     hostname: tempo.antonio3a.aaa
     ports:
@@ -44,7 +34,6 @@ services:
       - "9411:9411"
     volumes:
       - ${AAA_HOME}/tempo/tempo.yaml:/etc/tempo.yaml
-      - antonio3a-grafana-tempo-vol:/var/tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
 
 networks:
@@ -55,6 +44,4 @@ volumes:
   antonio3a-grafana-vol:
     external: true
   antonio3a-grafana-loki-vol:
-    external: true
-  antonio3a-grafana-tempo-vol:
     external: true
