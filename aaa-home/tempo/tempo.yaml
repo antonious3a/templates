@@ -3,7 +3,6 @@ server:
 
 distributor:
   receivers:
-    opencensus:
     zipkin:
     otlp:
       protocols:
@@ -16,11 +15,12 @@ distributor:
         thrift_binary:
         thrift_compact:
 
-
 storage:
   trace:
-    backend: local
-    wal:
-      path: /var/tempo/wal
-    local:
-      path: /var/tempo/blocks
+    backend: s3
+    s3:
+      endpoint: minio.antonio3a.aaa:9000
+      bucket: grafana-tempo
+      insecure: true
+      access_key: access_key
+      secret_key: secret_key
