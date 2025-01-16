@@ -26,7 +26,7 @@ services:
 
   tempo:
     <<: *common
-    image: grafana/tempo:2.7.0
+    image: grafana/tempo:2.6.1
     container_name: antonio3a-tempo
     hostname: tempo.antonio3a.aaa
     ports:
