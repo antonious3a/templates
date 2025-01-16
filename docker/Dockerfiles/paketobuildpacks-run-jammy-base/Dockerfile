@@ -1,4 +1,4 @@
-FROM paketobuildpacks/run-jammy-base:latest
+FROM paketobuildpacks/run-jammy-tiny:latest
 LABEL authors="antonio3a"
 
 USER root
@@ -13,4 +13,4 @@ RUN apt update \
 
 USER cnb
 
-# docker build -t antonio3a/paketobuildpacks-run-jammy-base:latest .
+# docker build -t antonio3a/paketobuildpacks-run-jammy-tiny:latest .
