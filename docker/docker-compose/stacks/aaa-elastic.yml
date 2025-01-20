@@ -61,13 +61,15 @@ services:
     environment:
       - SERVERNAME=antonio3a-kibana
       - ELASTICSEARCH_HOSTS=https://elasticsearch.antonio3a.aaa:9200
-      - ELASTICSEARCH_USERNAME=kibana
-      - ELASTICSEARCH_PASSWORD=${AAA_PASS}
+      - ELASTICSEARCH_SERVICEACCOUNTTOKEN=token
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
       - SERVER_SSL_ENABLED=true
       - SERVER_SSL_KEY=/usr/share/kibana/config/certs/antonio3a.aaa.key
       - SERVER_SSL_CERTIFICATE=/usr/share/kibana/config/certs/antonio3a.aaa.crt
       - SERVER_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
+      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
     ports:
       - "5601:5601"
     depends_on:
