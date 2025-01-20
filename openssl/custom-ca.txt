@@ -50,7 +50,7 @@ emailAddress                    = Email Address
 
 openssl ecparam -genkey -name prime256v1 -out ~/antonio3a-ca/private/ca.key
 openssl req -x509 -new -nodes -key ~/antonio3a-ca/private/ca.key -sha256 -days 36500 \
-    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=António António" \
+    -subj "/C=AO/ST=Luanda/L=Luanda/O=Antonio 3A Group/OU=3A Dept/CN=Antonio Antonio" \
     -out ~/antonio3a-ca/certs/ca.crt
 
 
@@ -60,7 +60,7 @@ mkdir antonio3a.aaa
 cd antonio3a.aaa
 openssl ecparam -genkey -name prime256v1 -out antonio3a.aaa.key
 openssl req -new -key antonio3a.aaa.key \
-    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=antonio3a.aaa" \
+    -subj "/C=AO/ST=Luanda/L=Luanda/O=Antonio 3A Group/OU=3A Dept/CN=antonio3a.aaa" \
     -out antonio3a.aaa.csr
 
 ### touch antonio3a.aaa.ext
