@@ -48,7 +48,7 @@ emailAddress                    = Email Address
 ######################################################
 
 
-openssl genrsa -out ~/antonio3a-ca/private/ca.key 4096
+openssl genpkey -algorithm ED25519 -out ~/antonio3a-ca/private/ca.key
 openssl req -x509 -new -nodes -key ~/antonio3a-ca/private/ca.key -sha256 -days 36500 \
     -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=António António" \
     -out ~/antonio3a-ca/certs/ca.crt
@@ -56,14 +56,14 @@ openssl req -x509 -new -nodes -key ~/antonio3a-ca/private/ca.key -sha256 -days 3
 
 
 
-mkdir app.antonio3a.aaa
-cd app.antonio3a.aaa
-openssl genrsa -out app.antonio3a.aaa.key 4096
-openssl req -new -key app.antonio3a.aaa.key \
-    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=app.antonio3a.aaa" \
-    -out app.antonio3a.aaa.csr
+mkdir antonio3a.aaa
+cd antonio3a.aaa
+openssl genpkey -algorithm ED25519 -out antonio3a.aaa.key
+openssl req -new -key antonio3a.aaa.key \
+    -subj "/C=AO/ST=Luanda/L=Luanda/O=António 3A Group/OU=3A Dept/CN=antonio3a.aaa" \
+    -out antonio3a.aaa.csr
 
-### touch app.antonio3a.aaa.ext
+### touch antonio3a.aaa.ext
 [ v3_req ]
 authorityKeyIdentifier=keyid,issuer
 subjectAltName = @alt_names
@@ -72,15 +72,15 @@ extendedKeyUsage = serverAuth, clientAuth
 basicConstraints = CA:FALSE
 
 [ alt_names ]
-DNS.1 = app.antonio3a.aaa
-DNS.2 = sub.app.antonio3a.aaa
-IP.1 = 172.16.0.1
-IP.2 = 172.16.0.2
+DNS.1 = localhost
+DNS.2 = antonio3a.aaa
+DNS.3 = *.antonio3a.aaa
+IP.1 = 127.0.0.1
 ######################################################
 
 openssl ca -config ~/antonio3a-ca/openssl.cnf \
     -extensions v3_req \
     -days 36500 -notext -md sha256 \
-    -in app.antonio3a.aaa.csr \
-    -out app.antonio3a.aaa.crt \
-    -extfile app.antonio3a.aaa.ext
+    -in antonio3a.aaa.csr \
+    -out antonio3a.aaa.crt \
+    -extfile antonio3a.aaa.ext
