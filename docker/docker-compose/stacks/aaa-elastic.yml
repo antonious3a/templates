@@ -10,12 +10,27 @@ services:
     container_name: antonio3a-elasticsearch
     hostname: elasticsearch.antonio3a.aaa
     environment:
+      - node.name=antonio3a-es0
+      - cluster.name=antonio3a-es-cluster
+      #- cluster.initial_master_nodes=antonio3a-es#
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      #- discovery.seed_hosts=antonio3a-es[1-n]
+      - ELASTIC_PASSWORD=${AAA_PASS}
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/antonio3a.aaa.key
+      - xpack.security.http.ssl.certificate=certs/antonio3a.aaa.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/antonio3a-ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/antonio3a.aaa.key
+      - xpack.security.transport.ssl.certificate=certs/antonio3a.aaa.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/antonio3a-ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
     ports:
       - "9200:9200"
       - "9300:9300"
     volumes:
+      - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/elasticsearch/config/certs
       - antonio3a-elasticsearch-data-vol:/usr/share/elasticsearch/data
     deploy:
       resources:
@@ -30,6 +45,7 @@ services:
     volumes:
       - ${AAA_HOME}/logstash/pipeline:/usr/share/logstash/pipeline
       - ${AAA_HOME}/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/logstash/config/certs
     ports:
       - "5000:5000"
       - "9600:9600"
@@ -43,12 +59,23 @@ services:
     container_name: antonio3a-kibana
     hostname: kibana.antonio3a.aaa
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch.antonio3a.aaa:9200
+      - SERVERNAME=antonio3a-kibana
+      - ELASTICSEARCH_HOSTS=https://elasticsearch.antonio3a.aaa:9200
+      - ELASTICSEARCH_USERNAME=kibana
+      - ELASTICSEARCH_PASSWORD=${AAA_PASS}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_KEY=/usr/share/kibana/config/certs/antonio3a.aaa.key
+      - SERVER_SSL_CERTIFICATE=/usr/share/kibana/config/certs/antonio3a.aaa.crt
+      - SERVER_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
     ports:
       - "5601:5601"
     depends_on:
       elasticsearch:
         condition: service_started
+    volumes:
+      - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/kibana/config/certs
+      - antonio3a-kibana-data-vol:/usr/share/kibana/data
 
   apm-server:
     <<: *common
@@ -86,4 +113,4 @@ networks:
 
 volumes:
   antonio3a-elasticsearch-data-vol:
-    external: true
+  antonio3a-kibana-data-vol:
