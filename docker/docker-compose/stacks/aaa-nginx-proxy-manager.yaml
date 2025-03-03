@@ -7,12 +7,16 @@ services:
   nginx-proxy-manager:
     <<: *common
     image: jc21/nginx-proxy-manager:2.12.3
+    hostname: nginx-proxy-manager.antonio3a.aaa
+    container_name: antonio3a-nginx-proxy-manager
     ports:
       - "9380:80"
       - "3443:443"
       - "9381:81"
       - "9321:21"
     environment:
+      INITIAL_ADMIN_EMAIL: ${AAA_EMAIL}
+      INITIAL_ADMIN_PASSWORD: ${AAA_PASS}
       DB_POSTGRES_HOST: postgresql.antonio3a.aaa
       DB_POSTGRES_PORT: 5432
       DB_POSTGRES_USER: ${AAA_USER}
