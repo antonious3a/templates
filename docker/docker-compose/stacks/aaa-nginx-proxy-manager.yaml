@@ -1,0 +1,33 @@
+x-common: &common
+  networks:
+    - antonio3a-bridge
+  restart: unless-stopped
+
+services:
+  nginx-proxy-manager:
+    <<: *common
+    image: jc21/nginx-proxy-manager:2.12.3
+    ports:
+      - "9380:80"
+      - "3443:443"
+      - "9381:81"
+      - "9321:21"
+    environment:
+      DB_POSTGRES_HOST: postgresql.antonio3a.aaa
+      DB_POSTGRES_PORT: 5432
+      DB_POSTGRES_USER: ${AAA_USER}
+      DB_POSTGRES_PASSWORD: ${AAA_PASS}
+      DB_POSTGRES_NAME: nginx_proxy_manager
+    volumes:
+      - nginx-proxy-manager-data-vol:/data
+      - nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
+
+networks:
+  antonio3a-bridge:
+    external: true
+
+volumes:
+  nginx-proxy-manager-data-vol:
+    external: true
+  nginx-proxy-manager-letsencrypt-vol:
+    external: true
