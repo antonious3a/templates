@@ -1,7 +1,7 @@
 x-common: &common
   networks:
     - antonio3a-bridge
-  restart: unless-stopped
+  restart: always
 
 services:
   nginx-proxy-manager:
@@ -10,10 +10,10 @@ services:
     hostname: nginx-proxy-manager.antonio3a.aaa
     container_name: antonio3a-nginx-proxy-manager
     ports:
-      - "9380:80"
-      - "3443:443"
-      - "9381:81"
-      - "9321:21"
+      - "80:80"
+      - "443:443"
+      - "81:81"
+      - "21:21"
     environment:
       INITIAL_ADMIN_EMAIL: ${AAA_EMAIL}
       INITIAL_ADMIN_PASSWORD: ${AAA_PASS}
@@ -23,15 +23,15 @@ services:
       DB_POSTGRES_PASSWORD: ${AAA_PASS}
       DB_POSTGRES_NAME: nginx_proxy_manager
     volumes:
-      - nginx-proxy-manager-data-vol:/data
-      - nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
+      - antonio3a-nginx-proxy-manager-data-vol:/data
+      - antonio3a-nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
 
 networks:
   antonio3a-bridge:
     external: true
 
 volumes:
-  nginx-proxy-manager-data-vol:
+  antonio3a-nginx-proxy-manager-data-vol:
     external: true
-  nginx-proxy-manager-letsencrypt-vol:
+  antonio3a-nginx-proxy-manager-letsencrypt-vol:
     external: true
