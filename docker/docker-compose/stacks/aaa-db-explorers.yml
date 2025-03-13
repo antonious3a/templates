@@ -6,7 +6,7 @@ x-common: &common
 services:
   pgadmin:
     <<: *common
-    image: dpage/pgadmin4:8.12.0
+    image: dpage/pgadmin4:9.1.0
     container_name: antonio3a-pgadmin
     hostname: pgadmin.antonio3a.aaa
     ports:
@@ -15,7 +15,7 @@ services:
     volumes:
       - antonio3a-pgadmin-data-vol:/var/lib/pgadmin
     environment:
-      - PGADMIN_DEFAULT_EMAIL=antonio3a@antonio3a.aaa
+      - PGADMIN_DEFAULT_EMAIL=${AAA_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${AAA_PASS}
       - PGADMIN_DEFAULT_USERNAME=${AAA_USER}
 
