@@ -23,7 +23,7 @@ services:
     <<: *common
     container_name: antonio3a-cloudbeaver
     hostname: cloudbeaver.antonio3a.aaa
-    image: dbeaver/cloudbeaver:24.1.1
+    image: dbeaver/cloudbeaver:25.0.1
     ports:
       - "8978:8978"
     volumes:
