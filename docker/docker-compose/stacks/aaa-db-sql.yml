@@ -5,7 +5,7 @@ x-common : &common
 
 services:
   mysql:
-    image: mysql:9.1.0
+    image: mysql:9.2.0
     container_name: antonio3a-mysql
     hostname: mysql.antonio3a.aaa
     environment:
