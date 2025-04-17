@@ -2,30 +2,42 @@ FROM ubuntu:24.04
 
 LABEL authors="antonio3a"
 
+SHELL ["/bin/bash", "-c"]
+ENV HOME=/root
+
 RUN apt update && \
     apt install -y \
-    bash \
     ca-certificates \
     curl \
     git \
     openssh-client \
     tar \
     unzip \
+    xz-utils \
     zip && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://fnm.vercel.app/install /tmp/fnm-install.sh
 
-ENV FNM_DIR="/root/.local/share/fnm"
+############### Node #########################
+ENV NODE_VERSION=22.14.0
+ENV NODE_DIST=node-v$NODE_VERSION-linux-x64
+ENV NODE_TAR=$NODE_DIST.tar.xz
+ENV NODE_URL=https://nodejs.org/dist/v$NODE_VERSION/$NODE_TAR
+ENV NODE_DIR=/opt/nodejs
 
-RUN bash /tmp/fnm-install.sh && \
-    rm /tmp/fnm-install.sh && \
-    ${FNM_DIR}/fnm install 22 && \
-    install -m 0755 -d /etc/apt/keyrings
+ADD $NODE_URL /tmp/$NODE_TAR
+RUN mkdir -p "$NODE_DIR" \
+    && tar -xf /tmp/"$NODE_TAR" -C "$NODE_DIR" --strip-components=1 \
+    && rm /tmp/"$NODE_TAR"
 
+ENV PATH="$NODE_DIR/bin:$PATH"
+RUN node -v && npm -v
+###############################################
+
+
+################# Docker ######################
 ADD https://download.docker.com/linux/ubuntu/gpg /etc/apt/keyrings/docker.asc
-
 RUN chmod a+r /etc/apt/keyrings/docker.asc && \
     echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
@@ -40,17 +52,51 @@ RUN chmod a+r /etc/apt/keyrings/docker.asc && \
     docker-compose-plugin && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+###############################################
 
+
+############## SDK Man ########################
 ADD https://get.sdkman.io /tmp/sdk-install.sh
-
 RUN bash /tmp/sdk-install.sh && \
     rm /tmp/sdk-install.sh
+###############################################
 
-SHELL ["/bin/bash", "-c"]
 
+############## Java #########################
+ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install maven && \
-    sdk install gradle && \
     sdk install java 21.0.6-tem
 
-LABEL authors="3A"
+ENV PATH="$JAVA_HOME/bin:$PATH"
+RUN java --version
+###############################################
+
+
+############## Maven #########################
+ENV MAVEN_HOME=$HOME/.sdkman/candidates/maven/current
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
+    sdk install maven
+
+ENV PATH="$MAVEN_HOME/bin:$PATH"
+RUN mvn --version
+###############################################
+
+
+############## Gradle #########################
+ENV GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
+    sdk install gradle
+
+ENV PATH="$GRADLE_HOME/bin:$PATH"
+RUN gradle --version
+###############################################
+
+###### Final Check ##############
+RUN docker -v && \
+    node -v && \
+    npm -v  && \
+    java --version && \
+    mvn --version && \
+    gradle --version
+
+CMD ["/bin/bash"]
