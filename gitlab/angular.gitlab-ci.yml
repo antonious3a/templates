@@ -1,0 +1,92 @@
+default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  tags:
+    - cpdi
+    - devops
+
+stages:
+  - check
+  - build
+  - release
+  - deploy
+
+variables:
+  IMAGE_DEV_TAG: $CI_REGISTRY_IMAGE:dev
+  IMAGE_PROD_TAG: $CI_REGISTRY_IMAGE:prod
+
+check:
+  stage: check
+  only:
+    - main
+  script:
+    - docker -v
+    - node -v
+    - npm -v
+    - java --version
+    - mvn --version
+    - gradle --version
+
+build-dev:
+  stage: build
+  only:
+    - main
+  cache:
+    key: node_modules
+    paths:
+      - node_modules
+  script:
+    - npm install
+    - npm install -g @angular/cli
+    - npm run build --configuration=development
+    - docker build --provenance false -t $IMAGE_DEV_TAG .
+
+build-prod:
+  stage: build
+  only:
+    - main
+  cache:
+    key: node_modules
+    paths:
+      - node_modules
+  script:
+    - npm install
+    - npm install -g @angular/cli
+    - npm run build --configuration=production
+    - docker build --provenance false -t $IMAGE_PROD_TAG .
+
+release-dev:
+  stage: release
+  only:
+    - main
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker push $IMAGE_DEV_TAG
+
+release-prod:
+  stage: release
+  only:
+    - main
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker push $IMAGE_PROD_TAG
+
+deploy-dev:
+  stage: deploy
+  only:
+    - main
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker compose -f docker-compose-dev.yaml pull
+    - docker compose -f docker-compose-dev.yaml down
+    - docker compose -f docker-compose-dev.yaml up -d
+
+deploy-prod:
+  stage: deploy
+  only:
+    - main
+  script:
+    - echo "Yo yo yo"
+    - echo "Getting ready for production deployment (^ ^)"
