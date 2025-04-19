@@ -14,7 +14,7 @@ services:
     container_name: portainer
     hostname: portainer.antonio3a.aaa
     ports:
-      - "8000:8000"
+#      - "8000:8000"
 #      - "9000:9000"
       - "9443:9443"
     volumes:
