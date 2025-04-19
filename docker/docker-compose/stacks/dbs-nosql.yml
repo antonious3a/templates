@@ -3,9 +3,14 @@ x-common : &common
     - antonio3a-bridge
   restart: unless-stopped
 
+networks:
+  antonio3a-bridge:
+    external: true
+
 services:
   mongodb:
-    image: mongo:8.0.4
+    <<: *common
+    image: mongo:8.0.8
     container_name: antonio3a-mongodb
     hostname: mongodb.antonio3a.aaa
     environment:
@@ -16,7 +21,6 @@ services:
     volumes:
       - antonio3a-mongodb-data-vol:/data/db
       - antonio3a-mongodb-config-vol:/data/configdb
-    <<: *common 
 
   neo4j:
     image: neo4j:5.26.0-enterprise
@@ -43,10 +47,6 @@ services:
       resources:
         limits:
           memory: 1G
-
-networks:
-  antonio3a-bridge:
-    external: true
 
 volumes:
   antonio3a-mongodb-data-vol:
