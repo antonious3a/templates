@@ -29,6 +29,7 @@ services:
     image: gitlab/gitlab-runner:alpine-v17.11.0
     container_name: antonio3a-gitlab-runner
     hostname: gitlab-runner.antonio3a.aaa
+    privileged: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - antonio3a-gitlab-runner-home-vol:/home/gitlab-runner
