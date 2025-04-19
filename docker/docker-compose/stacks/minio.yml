@@ -13,7 +13,7 @@ services:
       - minio-vol:/data
     networks:
       - antonio3a-bridge
-    restart: always
+    restart: unless-stopped
     command: server /data --console-address ":9001"
 
 networks:

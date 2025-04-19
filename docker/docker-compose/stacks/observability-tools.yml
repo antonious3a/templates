@@ -1,7 +1,7 @@
 x-common : &common
   networks:
     - antonio3a-bridge
-  restart: always
+  restart: unless-stopped
 
 services:
   prometheus:

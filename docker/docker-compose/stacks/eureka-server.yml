@@ -2,7 +2,7 @@ x-common: &common
   image: antonio3a/aaa-eureka-server
   networks:
     - antonio3a-bridge
-  restart: always
+  restart: unless-stopped
 
 x-common-env: &common-env
   EUREKA_ENVIRONMENT: development

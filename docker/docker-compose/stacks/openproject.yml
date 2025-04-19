@@ -3,7 +3,7 @@ services:
     image: openproject/openproject:14.6.1
     container_name: openproject
     hostname: openproject.antonio3a.aaa
-    restart: always
+    restart: unless-stopped
     environment:
       - OPENPROJECT_HTTPS=false
       - OPENPROJECT_SECRET_KEY_BASE=1234secret5678

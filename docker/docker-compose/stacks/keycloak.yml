@@ -15,7 +15,7 @@ services:
       - "8443:8443"
     networks:
       - antonio3a-bridge
-    restart: always
+    restart: unless-stopped
     command: [
       "start-dev",
       "--features=token-exchange",
