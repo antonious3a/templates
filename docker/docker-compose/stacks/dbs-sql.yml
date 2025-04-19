@@ -3,9 +3,14 @@ x-common : &common
     - antonio3a-bridge
   restart: unless-stopped
 
+networks:
+  antonio3a-bridge:
+    external: true
+
 services:
   mysql:
-    image: mysql:9.2.0
+    <<: *common
+    image: mysql:9.3.0
     container_name: antonio3a-mysql
     hostname: mysql.antonio3a.aaa
     environment:
@@ -15,9 +20,9 @@ services:
       - "3306:3306"
     volumes:
       - antonio3a-mysql-vol:/var/lib/mysql
-    <<: *common 
 
   postgresql:
+    <<: *common
     image: postgres:17.4
     container_name: antonio3a-postgresql
     hostname: postgresql.antonio3a.aaa
@@ -29,9 +34,9 @@ services:
       - "5432:5432"
     volumes:
       - antonio3a-postgresql-vol:/var/lib/postgresql/data
-    <<: *common 
 
   sqlserver:
+    <<: *common
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: antonio3a-sqlserver
     hostname: sqlserver.antonio3a.aaa
@@ -43,11 +48,6 @@ services:
       - "1433:1433"
     volumes:
       - antonio3a-sqlserver-vol:/var/opt/mssql
-    <<: *common 
-
-networks:
-  antonio3a-bridge:
-    external: true
 
 volumes:
   antonio3a-mysql-vol:
