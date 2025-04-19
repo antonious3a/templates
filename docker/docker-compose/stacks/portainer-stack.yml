@@ -1,7 +1,7 @@
 services:
   portainer:
     image: portainer/portainer-ce:2.21.3
-    container_name: antonio3a-portainer
+    container_name: portainer
     hostname: portainer.antonio3a.aaa
     restart: always
     ports:
@@ -16,7 +16,7 @@ services:
 
   portainer-agent:
     image: portainer/agent:2.21.3
-    container_name: antonio3a-portainer-agent
+    container_name: portainer-agent
     hostname: portainer-agent.antonio3a.aaa
     restart: always
     ports:

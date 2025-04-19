@@ -11,7 +11,7 @@ services:
   mysql:
     <<: *common
     image: mysql:9.3.0
-    container_name: antonio3a-mysql
+    container_name: mysql
     hostname: mysql.antonio3a.aaa
     environment:
       - MYSQL_ROOT_PASSWORD=${AAA_PASS}
@@ -19,12 +19,12 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - antonio3a-mysql-vol:/var/lib/mysql
+      - mysql-vol:/var/lib/mysql
 
   postgresql:
     <<: *common
     image: postgres:17.4
-    container_name: antonio3a-postgresql
+    container_name: postgresql
     hostname: postgresql.antonio3a.aaa
     environment:
       - POSTGRES_USER=${AAA_USER}
@@ -33,12 +33,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - antonio3a-postgresql-vol:/var/lib/postgresql/data
+      - postgresql-vol:/var/lib/postgresql/data
 
   sqlserver:
     <<: *common
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: antonio3a-sqlserver
+    container_name: sqlserver
     hostname: sqlserver.antonio3a.aaa
     environment:
       - ACCEPT_EULA=Y
@@ -47,12 +47,12 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - antonio3a-sqlserver-vol:/var/opt/mssql
+      - sqlserver-vol:/var/opt/mssql
 
 volumes:
-  antonio3a-mysql-vol:
+  mysql-vol:
     external: true
-  antonio3a-postgresql-vol:
+  postgresql-vol:
     external: true
-  antonio3a-sqlserver-vol:
+  sqlserver-vol:
     external: true

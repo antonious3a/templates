@@ -6,7 +6,7 @@ x-common: &common
 services:
   kafka:
     image: bitnami/kafka:3.8.0
-    container_name: antonio3a-kafka
+    container_name: kafka
     hostname: kafka.antonio3a.aaa
     environment:
       - KAFKA_CFG_NODE_ID=0
@@ -19,12 +19,12 @@ services:
     ports:
       - "9092:9092"
     volumes:
-      - antonio3a-kafka-vol:/bitnami/kafka
+      - kafka-vol:/bitnami/kafka
     <<: *common
 
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
-    container_name: antonio3a-kafka-ui
+    container_name: kafka-ui
     hostname: kafka-ui.antonio3a.aaa
     environment:
       - DYNAMIC_CONFIG_ENABLED=true
@@ -34,7 +34,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:4.0.5-management
-    container_name: antonio3a-rabbitmq
+    container_name: rabbitmq
     hostname: rabbitmq.antonio3a.aaa
     ports:
       - "5672:5672"
@@ -44,7 +44,7 @@ services:
       RABBITMQ_DEFAULT_USER: ${AAA_USER}
       RABBITMQ_DEFAULT_PASS: ${AAA_PASS}
     volumes:
-      - antonio3a-rabbitmq-vol:/var/lib/rabbitmq
+      - rabbitmq-vol:/var/lib/rabbitmq
       - ${AAA_HOME}/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
     <<: *common
 
@@ -53,7 +53,7 @@ networks:
     external: true
 
 volumes:
-  antonio3a-kafka-vol:
+  kafka-vol:
     external: true
-  antonio3a-rabbitmq-vol:
+  rabbitmq-vol:
     external: true

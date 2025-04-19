@@ -11,7 +11,7 @@ services:
   mongodb:
     <<: *common
     image: mongo:8.0.8
-    container_name: antonio3a-mongodb
+    container_name: mongodb
     hostname: mongodb.antonio3a.aaa
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${AAA_USER}
@@ -19,12 +19,12 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - antonio3a-mongodb-data-vol:/data/db
-      - antonio3a-mongodb-config-vol:/data/configdb
+      - mongodb-data-vol:/data/db
+      - mongodb-config-vol:/data/configdb
 
   neo4j:
     image: neo4j:5.26.0-enterprise
-    container_name: antonio3a-neo4j
+    container_name: neo4j
     hostname: neo4j.antonio3a.aaa
     environment:
       - apoc.export.file.enabled=true
@@ -38,9 +38,9 @@ services:
       - "7474:7474"
       - "7687:7687"
     volumes:
-      - antonio3a-neo4j-data-vol:/data
-      - antonio3a-neo4j-logs-vol:/logs
-      - antonio3a-neo4j-plugins-vol:/plugins
+      - neo4j-data-vol:/data
+      - neo4j-logs-vol:/logs
+      - neo4j-plugins-vol:/plugins
       - $AAA_HOME/neo4j/conf/apoc.conf:/var/lib/neo4j/conf/apoc.conf
     <<: *common
     deploy:
@@ -49,13 +49,13 @@ services:
           memory: 1G
 
 volumes:
-  antonio3a-mongodb-data-vol:
+  mongodb-data-vol:
     external: true
-  antonio3a-mongodb-config-vol:
+  mongodb-config-vol:
     external: true
-  antonio3a-neo4j-data-vol:
+  neo4j-data-vol:
     external: true
-  antonio3a-neo4j-logs-vol:
+  neo4j-logs-vol:
     external: true
-  antonio3a-neo4j-plugins-vol:
+  neo4j-plugins-vol:
     external: true

@@ -7,11 +7,11 @@ services:
   vault:
     <<: *common 
     image: hashicorp/vault:1.18.3
-    container_name: antonio3a-vault
+    container_name: vault
     hostname: vault.antonio3a.aaa
     volumes:
-      - antonio3a-vault-logs-vol:/vault/logs
-      - antonio3a-vault-file-vol:/vault/file
+      - vault-logs-vol:/vault/logs
+      - vault-file-vol:/vault/file
       - ${AAA_HOME}/vault/config/local.json:/vault/config/local.json
     environment:
       VAULT_ADDR: http://127.0.0.1:8200
@@ -27,7 +27,7 @@ services:
   vault-unseal:
     <<: *common 
     image: blockloop/vault-unseal
-    container_name: antonio3a-vault-unseal
+    container_name: vault-unseal
     hostname: vault-unseal.antonio3a.aaa
     environment:
       VAULT_ADDR: http://vault.antonio3a.aaa:8200
@@ -38,8 +38,8 @@ services:
       VAULT_UNSEAL_KEY_4: 4
       VAULT_UNSEAL_KEY_5: 5
     volumes:
-      - antonio3a-vault-logs-vol:/vault/logs
-      - antonio3a-vault-file-vol:/vault/file
+      - vault-logs-vol:/vault/logs
+      - vault-file-vol:/vault/file
     depends_on:
       - vault
 
@@ -48,7 +48,7 @@ networks:
     external: true
 
 volumes:
-  antonio3a-vault-logs-vol:
+  vault-logs-vol:
     external: true
-  antonio3a-vault-file-vol:
+  vault-file-vol:
     external: true

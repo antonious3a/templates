@@ -8,7 +8,7 @@ services:
     <<: *common
     image: jc21/nginx-proxy-manager:2.12.3
     hostname: nginx-proxy-manager.antonio3a.aaa
-    container_name: antonio3a-nginx-proxy-manager
+    container_name: nginx-proxy-manager
     ports:
       - "80:80"
       - "443:443"
@@ -23,15 +23,15 @@ services:
       DB_POSTGRES_PASSWORD: ${AAA_PASS}
       DB_POSTGRES_NAME: nginx_proxy_manager
     volumes:
-      - antonio3a-nginx-proxy-manager-data-vol:/data
-      - antonio3a-nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
+      - nginx-proxy-manager-data-vol:/data
+      - nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
 
 networks:
   antonio3a-bridge:
     external: true
 
 volumes:
-  antonio3a-nginx-proxy-manager-data-vol:
+  nginx-proxy-manager-data-vol:
     external: true
-  antonio3a-nginx-proxy-manager-letsencrypt-vol:
+  nginx-proxy-manager-letsencrypt-vol:
     external: true

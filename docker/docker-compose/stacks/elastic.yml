@@ -7,14 +7,14 @@ services:
   elasticsearch:
     <<: *common
     image: elasticsearch:${ELASTIC_VERSION}
-    container_name: antonio3a-elasticsearch
+    container_name: elasticsearch
     hostname: elasticsearch.antonio3a.aaa
     environment:
-      - node.name=antonio3a-es0
-      - cluster.name=antonio3a-es-cluster
-      #- cluster.initial_master_nodes=antonio3a-es#
+      - node.name=es0
+      - cluster.name=es-cluster
+      #- cluster.initial_master_nodes=es#
       - discovery.type=single-node
-      #- discovery.seed_hosts=antonio3a-es[1-n]
+      #- discovery.seed_hosts=es[1-n]
       - ELASTIC_PASSWORD=${AAA_PASS}
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
@@ -31,7 +31,7 @@ services:
       - "9300:9300"
     volumes:
       - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/elasticsearch/config/certs
-      - antonio3a-elasticsearch-data-vol:/usr/share/elasticsearch/data
+      - elasticsearch-data-vol:/usr/share/elasticsearch/data
     deploy:
       resources:
         limits:
@@ -40,7 +40,7 @@ services:
   logstash:
     <<: *common
     image: logstash:${ELASTIC_VERSION}
-    container_name: antonio3a-logstash
+    container_name: logstash
     hostname: logstash.antonio3a.aaa
     volumes:
       - ${AAA_HOME}/logstash/pipeline:/usr/share/logstash/pipeline
@@ -56,10 +56,10 @@ services:
   kibana:
     <<: *common
     image: kibana:${ELASTIC_VERSION}
-    container_name: antonio3a-kibana
+    container_name: kibana
     hostname: kibana.antonio3a.aaa
     environment:
-      - SERVERNAME=antonio3a-kibana
+      - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://elasticsearch.antonio3a.aaa:9200
       - ELASTICSEARCH_SERVICEACCOUNTTOKEN=token
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
@@ -77,7 +77,7 @@ services:
         condition: service_started
     volumes:
       - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/kibana/config/certs
-      - antonio3a-kibana-data-vol:/usr/share/kibana/data
+      - kibana-data-vol:/usr/share/kibana/data
 
 
 
@@ -127,5 +127,5 @@ networks:
     external: true
 
 volumes:
-  antonio3a-elasticsearch-data-vol:
-  antonio3a-kibana-data-vol:
+  elasticsearch-data-vol:
+  kibana-data-vol:
