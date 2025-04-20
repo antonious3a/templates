@@ -16,7 +16,6 @@ services:
       - KC_METRICS_ENABLED=true
       - KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/certs/cert.crt
       - KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/certs/key.key
-      -
 #    ports:
 #      - "8080:8080"
 #      - "8443:8443"
