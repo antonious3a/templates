@@ -1,29 +1,38 @@
 services:
   keycloak:
-    image: keycloak/keycloak:26.1.4-0
+    image: keycloak/keycloak:26.2.0-0
     container_name: keycloak
     hostname: keycloak.antonio3a.aaa
     environment:
       - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/antonio3a_keycloak
+      - KC_DB_URL=jdbc:postgresql://postgresql.antonio3a.aaa:5432/keycloak
       - KC_DB_USERNAME=${AAA_USER}
       - KC_DB_PASSWORD=${AAA_PASS}
       - KC_BOOTSTRAP_ADMIN_USERNAME=${AAA_USER}
       - KC_BOOTSTRAP_ADMIN_PASSWORD=${AAA_PASS}
-    ports:
-      - "8080:8080"
-      - "8443:8443"
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+      - KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/certs/cert.crt
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/certs/key.key
+      -
+#    ports:
+#      - "8080:8080"
+#      - "8443:8443"
+#      - "9000:9000"
     networks:
       - antonio3a-bridge
+    volumes:
+      - ${AAA_HOME}/ssl:/opt/keycloak/conf/certs:ro
     restart: unless-stopped
     command: [
-      "start-dev",
-      "--features=token-exchange",
+      "start",
     ]
-    deploy:
-      resources:
-        limits:
-          memory: 1G
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 1G
 
 networks:
   antonio3a-bridge:
