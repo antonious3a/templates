@@ -33,7 +33,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ${AAA_HOME}/ssl:/var/lib/postgresql/certs:ro
+      - ${AAA_HOME}/ssl:/var/lib/postgresql/data/certs:ro
       - postgresql-vol:/var/lib/postgresql/data
 
   sqlserver:
