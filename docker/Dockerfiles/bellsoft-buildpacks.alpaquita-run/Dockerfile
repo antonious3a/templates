@@ -3,12 +3,9 @@ LABEL authors="antonio3a"
 
 USER root
 
-RUN apk update \
-    && apk add --no-cache \
-    curl \
-    fontconfig \
-    freetype \
-    ttf-dejavu
+RUN apk update && \
+    apk add --no-cache \
+    curl
 
 USER cnb
 
