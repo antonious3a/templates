@@ -1,33 +1,33 @@
 x-common : &common
   networks:
     - antonio3a-bridge
-  restart: always
+  restart: unless-stopped
 
 services:
   grafana:
     <<: *common
     image: grafana/grafana:11.4.0
-    container_name: antonio3a-grafana
+    container_name: grafana
     hostname: grafana.antonio3a.aaa
     ports:
       - "3000:3000"
     volumes:
-      - antonio3a-grafana-vol:/var/lib/grafana
+      - grafana-vol:/var/lib/grafana
 
   loki:
     <<: *common
     image: grafana/loki:3.3.2
-    container_name: antonio3a-loki
+    container_name: loki
     hostname: loki.antonio3a.aaa
     ports:
       - "3100:3100"
     volumes:
-      - antonio3a-grafana-loki-vol:/loki
+      - grafana-loki-vol:/loki
 
   tempo:
     <<: *common
     image: grafana/tempo:2.6.1
-    container_name: antonio3a-tempo
+    container_name: tempo
     hostname: tempo.antonio3a.aaa
     ports:
       - "3200:3200"
@@ -41,7 +41,7 @@ networks:
     external: true
 
 volumes:
-  antonio3a-grafana-vol:
+  grafana-vol:
     external: true
-  antonio3a-grafana-loki-vol:
+  grafana-loki-vol:
     external: true

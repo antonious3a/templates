@@ -1,19 +1,19 @@
 services:
   openproject:
     image: openproject/openproject:14.6.1
-    container_name: antonio3a-openproject
+    container_name: openproject
     hostname: openproject.antonio3a.aaa
-    restart: always
+    restart: unless-stopped
     environment:
       - OPENPROJECT_HTTPS=false
       - OPENPROJECT_SECRET_KEY_BASE=1234secret5678
       - OPENPROJECT_HOST__NAME=openproject.antonio3a.aaa
       - OPENPROJECT_DEFAULT__LANGUAGE=en
-      - DATABASE_URL=postgres://antonio3a:${AAA_PASS}@antonio3a-postgresql/antonio3a_openproject_db
+      - DATABASE_URL=postgres://antonio3a:${AAA_PASS}@postgresql/antonio3a_openproject_db
     ports:
       - "8080:80"
     volumes:
-      - antonio3a-openproject-data-vol:/var/openproject/assets
+      - openproject-data-vol:/var/openproject/assets
     networks:
       - antonio3a-bridge
 
@@ -22,5 +22,5 @@ networks:
     external: true
 
 volumes:
-  antonio3a-openproject-data-vol:
+  openproject-data-vol:
     external: true

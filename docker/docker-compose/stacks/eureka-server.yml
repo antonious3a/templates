@@ -2,7 +2,7 @@ x-common: &common
   image: antonio3a/aaa-eureka-server
   networks:
     - antonio3a-bridge
-  restart: always
+  restart: unless-stopped
 
 x-common-env: &common-env
   EUREKA_ENVIRONMENT: development
@@ -10,9 +10,9 @@ x-common-env: &common-env
   EUREKA_CLIENT_REGISTER-WITH-EUREKA: true
 
 services:
-  antonio3a-eureka-1:
+  eureka-1:
     <<: *common
-    container_name: antonio3a-eureka-1
+    container_name: eureka-1
     hostname: eureka1.antonio3a.aaa
     environment:
       <<: *common-env
@@ -22,9 +22,9 @@ services:
     ports:
       - "8761:8761"
 
-  antonio3a-eureka-2:
+  eureka-2:
     <<: *common
-    container_name: antonio3a-eureka-2
+    container_name: eureka-2
     hostname: eureka2.antonio3a.aaa
     environment:
       <<: *common-env
@@ -34,9 +34,9 @@ services:
     ports:
       - "8762:8762"
 
-  antonio3a-eureka-3:
+  eureka-3:
     <<: *common
-    container_name: antonio3a-eureka-3
+    container_name: eureka-3
     hostname: eureka3.antonio3a.aaa
     environment:
       <<: *common-env

@@ -1,0 +1,46 @@
+x-common: &common
+  networks:
+    - antonio3a-bridge
+  restart: unless-stopped
+
+services:
+  sonarqube:
+    <<: *common
+    image: sonarqube:10.7.0-community
+    container_name: sonarqube
+    hostname: sonarqube.antonio3a.aaa
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://postgresql/antonio3a_sonarqube_db
+      - SONAR_JDBC_USERNAME=${AAA_USER}
+      - SONAR_JDBC_PASSWORD=${AAA_PASS}
+    ports:
+      - "9400:9000"
+    volumes:
+      - sonarqube-data-vol:/opt/sonarqube/data
+      - sonarqube-logs-vol:/opt/sonarqube/logs
+      - sonarqube-extensions-vol:/opt/sonarqube/extensions
+
+  jenkins:
+    <<: *common
+    image: jenkins/jenkins:2.481-jdk21
+    container_name: jenkins
+    hostname: jenkins.antonio3a.aaa
+    ports:
+      - "8180:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-vol:/var/jenkins_home
+
+networks:
+  antonio3a-bridge:
+    external: true
+
+volumes:
+  sonarqube-data-vol:
+    external: true
+  sonarqube-logs-vol:
+    external: true
+  sonarqube-extensions-vol:
+    external: true
+  jenkins-vol:
+    external: true

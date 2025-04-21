@@ -1,7 +1,7 @@
 services:
   minio:
     image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-    container_name: antonio3a-minio
+    container_name: minio
     hostname: minio.antonio3a.aaa
     environment:
       - MINIO_ROOT_USER=${AAA_USER}
@@ -10,10 +10,10 @@ services:
       - "9100:9000"
       - "9001:9001"
     volumes:
-      - antonio3a-minio-vol:/data
+      - minio-vol:/data
     networks:
       - antonio3a-bridge
-    restart: always
+    restart: unless-stopped
     command: server /data --console-address ":9001"
 
 networks:
@@ -21,5 +21,5 @@ networks:
     external: true
 
 volumes:
-  antonio3a-minio-vol:
+  minio-vol:
     external: true

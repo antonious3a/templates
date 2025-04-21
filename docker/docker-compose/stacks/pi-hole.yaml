@@ -1,0 +1,32 @@
+x-common: &common
+  networks:
+    - antonio3a-bridge
+  restart: unless-stopped
+
+networks:
+  antonio3a-bridge:
+    external: true
+
+services:
+  pihole:
+    <<: *common
+    container_name: pihole
+    image: pihole/pihole:2025.03.0
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8082:80/tcp"
+      - "8043:443/tcp"
+      # DHCP Server
+      #- "67:67/udp"
+    environment:
+      TZ: 'Africa/Luanda'
+      FTLCONF_webserver_api_password: ${AAA_PASS}
+    volumes:
+      - pihole-vol:/etc/pihole
+    cap_add:
+      - NET_ADMIN
+
+volumes:
+  pihole-vol:
+    external: true

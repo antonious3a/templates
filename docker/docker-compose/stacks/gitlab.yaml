@@ -1,0 +1,48 @@
+x-common: &common
+  networks:
+    - antonio3a-bridge
+  restart: unless-stopped
+
+networks:
+  antonio3a-bridge:
+    external: true
+
+services:
+  gitlab:
+    <<: *common
+    image: gitlab/gitlab-ee:17.5.0-ee.0
+    container_name: gitlab
+    hostname: gitlab.antonio3a.aaa
+    ports:
+      - "22:22"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - gitlab-data-vol:/var/opt/gitlab
+      - gitlab-config-vol:/etc/gitlab
+      - gitlab-logs-vol:/var/log/gitlab
+      - ${AAA_HOME}/ssl:/etc/gitlab/ssl
+    #gitlab-rake "gitlab:password:reset[root]"
+
+  gitlab-runner:
+    <<: *common
+    image: gitlab/gitlab-runner:alpine-v17.11.0
+    container_name: gitlab-runner
+    hostname: gitlab-runner.antonio3a.aaa
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab-runner-home-vol:/home/gitlab-runner
+      - gitlab-runner-config-vol:/etc/gitlab-runner
+
+volumes:
+  gitlab-data-vol:
+    external: true
+  gitlab-config-vol:
+    external: true
+  gitlab-logs-vol:
+    external: true
+  gitlab-runner-config-vol:
+    external: true
+  gitlab-runner-home-vol:
+    external: true

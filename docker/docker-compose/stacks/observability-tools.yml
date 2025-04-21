@@ -1,19 +1,19 @@
 x-common : &common
   networks:
     - antonio3a-bridge
-  restart: always
+  restart: unless-stopped
 
 services:
   prometheus:
     <<: *common
     image: prom/prometheus:v2.54.1
-    container_name: antonio3a-prometheus
+    container_name: prometheus
     hostname: prometheus.antonio3a.aaa
     ports:
       - "9090:9090"
     volumes:
       - ${AAA_HOME}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - antonio3a-prometheus-vol:/prometheus
+      - prometheus-vol:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
@@ -21,7 +21,7 @@ services:
   opentelemetry-collector:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
-    container_name: antonio3a-opentelemetry-collector
+    container_name: opentelemetry-collector
     hostname: opentelemetry-collector.antonio3a.aaa
     ports:
       - "1888:1888"   # pprof extension
@@ -39,7 +39,7 @@ services:
   jaeger-all-in-one:
     <<: *common
     image: jaegertracing/all-in-one:1.62.0
-    container_name: antonio3a-jaeger
+    container_name: jaeger
     hostname: jaeger.antonio3a.aaa
     environment:
       #- COLLECTOR_ZIPKIN_HTTP_PORT=9411
@@ -52,5 +52,5 @@ networks:
     external: true
 
 volumes:
-  antonio3a-prometheus-vol:
+  prometheus-vol:
     external: true
