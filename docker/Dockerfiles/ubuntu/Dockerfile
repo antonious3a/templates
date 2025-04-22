@@ -5,6 +5,7 @@ LABEL authors="antonio3a"
 SHELL ["/bin/bash", "-c"]
 ENV HOME=/root
 
+############### Packages #########################
 RUN apt update && \
     apt install -y \
     ca-certificates \
@@ -17,9 +18,10 @@ RUN apt update && \
     zip && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+###############################################
 
 
-############### Node #########################
+############### Node & Angular #########################
 ENV NODE_VERSION=22.14.0
 ENV NODE_DIST=node-v$NODE_VERSION-linux-x64
 ENV NODE_TAR=$NODE_DIST.tar.xz
@@ -32,7 +34,7 @@ RUN mkdir -p "$NODE_DIR" \
     && rm /tmp/"$NODE_TAR"
 
 ENV PATH="$NODE_DIR/bin:$PATH"
-RUN node -v && npm -v
+RUN npm install -g @angular/cli
 ###############################################
 
 
@@ -68,7 +70,6 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     sdk install java 21.0.6-tem
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
-RUN java --version
 ###############################################
 
 
@@ -78,7 +79,6 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     sdk install maven
 
 ENV PATH="$MAVEN_HOME/bin:$PATH"
-RUN mvn --version
 ###############################################
 
 
@@ -88,13 +88,13 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     sdk install gradle
 
 ENV PATH="$GRADLE_HOME/bin:$PATH"
-RUN gradle --version
 ###############################################
 
 ###### Final Check ##############
 RUN docker -v && \
     node -v && \
     npm -v  && \
+    ng --version && \
     java --version && \
     mvn --version && \
     gradle --version
