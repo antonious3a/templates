@@ -1,8 +1,8 @@
 default:
   image: antonio3a/ubuntu:24.04-dev-tools
   tags:
-    - cpdi
-    - devops
+    - 3A
+    - AAA
 
 stages:
   - check
@@ -16,8 +16,6 @@ variables:
 
 check:
   stage: check
-  only:
-    - main
   script:
     - docker -v
     - node -v
@@ -29,7 +27,7 @@ check:
 build-dev:
   stage: build
   only:
-    - main
+    - develop
   cache:
     key: node_modules
     paths:
@@ -37,7 +35,7 @@ build-dev:
   script:
     - npm install
     - npm install -g @angular/cli
-    - npm run build --configuration=development
+    - ng build --configuration development
     - docker build --provenance false -t $IMAGE_DEV_TAG .
 
 build-prod:
@@ -51,15 +49,15 @@ build-prod:
   script:
     - npm install
     - npm install -g @angular/cli
-    - npm run build --configuration=production
+    - ng build --configuration production
     - docker build --provenance false -t $IMAGE_PROD_TAG .
 
 release-dev:
   stage: release
   only:
-    - main
+    - develop
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker push $IMAGE_DEV_TAG
 
@@ -68,16 +66,16 @@ release-prod:
   only:
     - main
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker push $IMAGE_PROD_TAG
 
 deploy-dev:
   stage: deploy
   only:
-    - main
+    - develop
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker compose -f docker-compose-dev.yaml pull
     - docker compose -f docker-compose-dev.yaml down
@@ -87,6 +85,17 @@ deploy-prod:
   stage: deploy
   only:
     - main
+  variables:
+    SSH_CONFIG: "-i $3A_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no"
+    SSH_PORT: $3A_VM_SSH_PORT
+    SSH_USER_HOST: "$3A_VM_USERNAME@$SSE_APPS_VM_IP"
+  before_script:
+    - chmod og= $GB_SSH_PRIVATE_KEY
+    - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - echo "Yo yo yo"
-    - echo "Getting ready for production deployment (^ ^)"
+    - export TEMP_DIR=$(ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mktemp -d /tmp/XXXXXXXXXXXXXXXXXXXX")
+    - scp $SSH_CONFIG -P $SSH_PORT docker-compose-prod.yaml $SSH_USER_HOST:$TEMP_DIR/
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose-prod.yaml pull
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose-prod.yaml -p $CI_PROJECT_NAME down
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose-prod.yaml -p $CI_PROJECT_NAME up -d
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
