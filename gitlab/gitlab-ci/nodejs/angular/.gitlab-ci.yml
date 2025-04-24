@@ -1,0 +1,6 @@
+include:
+  - project: '3A/templates'
+    file: '/gitlab-ci/nodejs/angular/build-deploy.gitlab-ci.yml'
+    inputs:
+      build-deploy-dev: yesss
+      build-deploy-prod: yesss
