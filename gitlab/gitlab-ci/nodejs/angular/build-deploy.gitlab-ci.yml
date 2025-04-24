@@ -1,0 +1,115 @@
+spec:
+  inputs:
+    build-deploy-dev:
+      description: Build and deploy development environment
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    build-deploy-prod:
+      description: Build and deploy production environment
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+---
+
+.default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  tags:
+    - 3A
+    - devops
+    - nodejs
+    - angular
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
+
+stages:
+  - build
+  - deploy
+
+variables:
+  BUILD_DEPLOY_DEV: $[[ inputs.build-deploy-dev ]]
+  BUILD_DEPLOY_PROD: $[[ inputs.build-deploy-prod ]]
+  PROJECT_NAME: $CI_PROJECT_NAME
+  IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
+
+.npm-ng: &npm-ng
+  - npm install --force
+  - ng build --configuration $ENVIRONMENT
+
+.docker-build-push: &docker-build-push
+  - docker build --provenance false -t $IMAGE_NAME .
+  - docker push $IMAGE_NAME
+
+.cahe: &cache
+  cache:
+    key: node-modules-$PROJECT_NAME
+    paths:
+      - node_modules
+
+.development:
+  extends: .default
+  variables:
+    ENVIRONMENT: development
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
+
+.production:
+  extends: .default
+  variables:
+    ENVIRONMENT: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
+
+build-dev:
+  stage: build
+  extends: .development
+  <<: *cache
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - *npm-ng
+    - *docker-build-push
+
+build-prod:
+  stage: build
+  extends: .production
+  <<: *cache
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - *npm-ng
+    - *docker-build-push
+    - docker rmi $IMAGE_NAME
+
+deploy-dev:
+  stage: deploy
+  extends: .development
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker compose -f docker-compose.yaml pull
+    - docker compose -f docker-compose.yaml down
+    - docker compose -f docker-compose.yaml up -d
+
+deploy-prod:
+  stage: deploy
+  extends: .production
+  variables:
+    SSH_PORT: $3A_VM_SSH_PORT
+    SSH_USER_HOST: $3A_VM_USERNAME@$SSE_APPS_VM_IP
+    SSH_CONFIG: -i $3A_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
+  before_script:
+    - chmod og= $GB_SSH_PRIVATE_KEY
+    - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo -e PROJECT_NAME="$PROJECT_NAME""\n"IMAGE_NAME="$IMAGE_NAME" > .env
+    - export TEMP_DIR=$(ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mktemp -d /tmp/XXXXXXXXXXXXXXXXXXXX")
+    - scp $SSH_CONFIG -P $SSH_PORT .env docker-compose.yaml $SSH_USER_HOST:$TEMP_DIR/
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml pull
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME down
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME up -d
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
