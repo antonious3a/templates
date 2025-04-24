@@ -1,0 +1,88 @@
+default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  tags:
+    - cpdi
+    - devops
+    - java
+    - maven
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
+
+variables:
+  USER_3A: 3A
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  VAULT_URI: $DEV_VAULT_URI
+  VAULT_TOKEN: $DEV_VAULT_TOKEN
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+  PROJECT_NAME: $CI_PROJECT_NAME
+  MAVEN_LOCAL_REPO: "$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=$MAVEN_LOCAL_REPO"
+
+stages:
+  - build-sonar
+  - test
+  - build
+  - deploy
+
+#build-sonar:
+#  stage: build-sonar
+#  cache:
+#    - key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+#      policy: pull-push
+#      paths:
+#        - "${SONAR_USER_HOME}/cache"
+#        - sonar-scanner/
+#    - key: "maven-local-repo"
+#      policy: pull-push
+#      paths:
+#        - "${HOME}/.m2/repository"
+#  script:
+#    - mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar #-Dspring.profiles.active=docker
+#  allow_failure: true
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == 'develop'
+
+test:
+  stage: test
+  cache:
+    key: "maven-local-repo"
+    policy: pull-push
+    paths:
+      - "$MAVEN_LOCAL_REPO"
+  script:
+    - mvn test -DskipTests=false -Dmaven.test.failure.ignore=true $MAVEN_OPTS
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop'
+
+build:
+  stage: build
+  cache:
+    key: "maven-local-repo"
+    policy: pull-push
+    paths:
+      - "$MAVEN_LOCAL_REPO"
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - mvn clean spring-boot:build-image -DskipTests=true $MAVEN_OPTS
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop'
+
+deploy-dev:
+  stage: deploy
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    #    - docker compose -f docker-compose.yaml pull
+    - docker compose -f docker-compose.yaml down
+    - docker compose -f docker-compose.yaml up -d
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop'
+
+deploy-prod:
+  stage: deploy
+  script:
+    - echo "Getting ready for production..."
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop'
