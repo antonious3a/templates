@@ -14,6 +14,7 @@ RUN apt update && \
     openssh-client \
     tar \
     unzip \
+    wget \
     xz-utils \
     zip && \
     apt clean && \
