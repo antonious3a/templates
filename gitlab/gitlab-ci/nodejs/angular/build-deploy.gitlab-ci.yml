@@ -16,16 +16,6 @@ spec:
         - nooo
 ---
 
-.default:
-  image: antonio3a/ubuntu:24.04-dev-tools
-  tags:
-    - 3A
-    - devops
-    - nodejs
-    - angular
-  after_script:
-    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
-
 stages:
   - build
   - deploy
@@ -33,20 +23,32 @@ stages:
 variables:
   BUILD_DEPLOY_DEV: $[[ inputs.build-deploy-dev ]]
   BUILD_DEPLOY_PROD: $[[ inputs.build-deploy-prod ]]
-  PROJECT_NAME: $CI_PROJECT_NAME
   IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
 
-.npm-ng: &npm-ng
+.default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  tags:
+    - cpdi
+    - devops
+    - nodejs
+    - angular
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
+
+.script-npm-ng: &npm-ng
   - npm install --force
   - ng build --configuration $ENVIRONMENT
 
-.docker-build-push: &docker-build-push
+.script-docker-build-push: &docker-build-push
   - docker build --provenance false -t $IMAGE_NAME .
   - docker push $IMAGE_NAME
 
+.script-curl: &curl
+  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o docker-compose.yaml \"https://gitlab.cpdi.dev/api/v4/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_ANGULAR_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main\""
+
 .cahe: &cache
   cache:
-    key: node-modules-$PROJECT_NAME
+    key: node-modules-$CI_PROJECT_NAME
     paths:
       - node_modules
 
@@ -73,6 +75,7 @@ build-dev:
   script:
     - *npm-ng
     - *docker-build-push
+    - docker image prune -f
 
 build-prod:
   stage: build
@@ -89,27 +92,30 @@ deploy-dev:
   stage: deploy
   extends: .development
   before_script:
+    - *curl
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker compose -f docker-compose.yaml pull
-    - docker compose -f docker-compose.yaml down
+    - docker compose -f docker-compose.yaml down --remove-orphans
     - docker compose -f docker-compose.yaml up -d
 
 deploy-prod:
   stage: deploy
   extends: .production
   variables:
-    SSH_PORT: $3A_VM_SSH_PORT
-    SSH_USER_HOST: $3A_VM_USERNAME@$SSE_APPS_VM_IP
-    SSH_CONFIG: -i $3A_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
+    SSH_PORT: $3A_APPS_VM_SSH_PORT
+    SSH_USER_HOST: $GB_USERNAME@$3A_APPS_VM_IP
+    SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
   before_script:
+    - *curl
     - chmod og= $GB_SSH_PRIVATE_KEY
     - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - echo -e PROJECT_NAME="$PROJECT_NAME""\n"IMAGE_NAME="$IMAGE_NAME" > .env
+    - echo -e PROJECT_NAME="$CI_PROJECT_NAME""\n"IMAGE_NAME="$IMAGE_NAME" > .env
     - export TEMP_DIR=$(ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mktemp -d /tmp/XXXXXXXXXXXXXXXXXXXX")
     - scp $SSH_CONFIG -P $SSH_PORT .env docker-compose.yaml $SSH_USER_HOST:$TEMP_DIR/
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml pull
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME down
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME down --remove-orphans
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME up -d
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
