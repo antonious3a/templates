@@ -1,14 +1,14 @@
 spec:
   inputs:
     build-deploy-dev:
-      description: Build and deploy development environment
+      description: Build and deploy in development environment
       type: string
       default: nooo
       options:
         - yesss
         - nooo
     build-deploy-prod:
-      description: Build and deploy production environment
+      description: Build and deploy in production environment
       type: string
       default: nooo
       options:
@@ -91,6 +91,8 @@ build-prod:
 deploy-dev:
   stage: deploy
   extends: .development
+  variables:
+    PROJECT_NAME: $CI_PROJECT_NAME
   before_script:
     - *curl
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
