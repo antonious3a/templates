@@ -1,0 +1,132 @@
+spec:
+  inputs:
+    build:
+      description: Build the project
+      type: string
+      default: yesss
+      options:
+        - yesss
+        - nooo
+    test:
+      description: Run tests
+      type: string
+      default: yesss
+      options:
+        - yesss
+        - nooo
+    run-sonar:
+      description: Run SonarQube analysis
+      type: string
+      default: yesss
+      options:
+        - yesss
+        - nooo
+    publish:
+      description: Publish the project
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+---
+
+default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  retry: 2
+  tags:
+    - cpdi
+    - devops
+    - java
+    - maven
+  before_script:
+    - mkdir -p .m2
+    - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o .m2/settings.xml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH/raw?ref=main\""
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
+
+stages:
+  - build
+  - test
+  - quality
+  - publish
+
+variables:
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
+  BUILD: $[[ inputs.build ]]
+  TEST: $[[ inputs.test ]]
+  RUN_SONAR: $[[ inputs.run-sonar ]]
+  PUBLISH: $[[ inputs.publish ]]
+
+  MAVEN_LOCAL_REPO: ".m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=$MAVEN_LOCAL_REPO"
+  MAVEN_CLI_OPTS: "-s .m2/settings.xml -ntp" # -B
+
+.cache-maven: &cache-maven
+  - key: "maven-local-repo"
+    paths:
+      - "$MAVEN_LOCAL_REPO"
+
+build:
+  stage: build
+  script:
+    - mvn $MAVEN_CLI_OPTS compile
+  cache:
+    - *cache-maven
+  rules:
+    - if: $BUILD == "yesss"
+      changes:
+        - pom.xml
+        - src/**/*
+
+test:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS test
+  cache:
+    - *cache-maven
+  rules:
+    - if: $TEST == "yesss"
+      changes:
+        - pom.xml
+        - src/**/*
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+
+sonarqube:
+  retry: 2
+  allow_failure: true
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  stage: quality
+  cache:
+    - *cache-maven
+    - key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+      paths:
+        - "${SONAR_USER_HOME}/cache"
+  script:
+    - mvn $MAVEN_CLI_OPTS verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+  rules:
+    - if: $RUN_SONAR == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: jacoco
+        path: target/site/jacoco/jacoco.xml
+
+publish:
+  stage: publish
+  script:
+    - mvn $MAVEN_CLI_OPTS deploy
+  cache:
+    - *cache-maven
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $PUBLISH == "yesss"
+      changes:
+        - pom.xml
+        - src/**/*
