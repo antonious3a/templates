@@ -1,0 +1,283 @@
+spec:
+  inputs:
+    test:
+      description: Run tests
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    run-sonar:
+      description: Run SonarQube analysis
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    build:
+      description: Build the project
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    build-deploy-dev:
+      description: Build and deploy in development environment
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    build-deploy-prod:
+      description: Build and deploy in production environment
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
+    dev-env-replicas:
+      description: Number of replicas for the development environment
+      type: number
+      default: 1
+    prod-env-replicas:
+      description: Number of replicas for the production environment
+      type: number
+      default: 1
+    dev-java-opts:
+      description: Java VM options for the development environment
+      type: string
+      default: "-XX:MaxDirectMemorySize=256m"
+    prod-java-opts:
+      description: Java VM options for the production environment
+      type: string
+      default: "-XX:MaxDirectMemorySize=256m"
+    dev-additional-spring-profiles:
+      description: Additional Spring profiles for the development environment
+      type: string
+      default: "profile"
+    prod-additional-spring-profiles:
+      description: Additional Spring profiles for the production environment
+      type: string
+      default: "profile"
+---
+
+stages:
+  - quality
+  - test
+  - build
+  - deploy
+
+.default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  retry: 1
+  tags:
+    - cpdi
+    - devops
+    - java
+    - maven
+    - spring-boot
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
+
+variables:
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
+  TEST: $[[ inputs.test ]]
+  RUN_SONAR: $[[ inputs.run-sonar ]]
+
+  BUILD_DEPLOY_DEV: $[[ inputs.build-deploy-dev ]]
+  BUILD_DEPLOY_PROD: $[[ inputs.build-deploy-prod ]]
+
+  DEV_ADDITIONAL_SPRING_PROFILES: $[[ inputs.dev-additional-spring-profiles ]]
+  PROD_ADDITIONAL_SPRING_PROFILES: $[[ inputs.prod-additional-spring-profiles ]]
+
+  VAULT_URI: $DEV_CPDI_VAULT_URI
+  VAULT_TOKEN: $DEV_VAULT_TOKEN
+
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+  PROJECT_NAME: $CI_PROJECT_NAME
+
+  MAVEN_LOCAL_REPO: ".m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=$MAVEN_LOCAL_REPO"
+  MAVEN_CLI_OPTS: "-s .m2/settings.xml -ntp" # -B
+
+  LOGSTASH_URI: ${DEV_LOGSTASH_URI}
+  GB_CA_KEY_PASSWORD: ${GB_CA_KEY_PASSWORD}
+
+  RETRIES: 10
+  TIMEOUT: 30
+
+  ENVIRONMENT: "environment"
+
+.cache-maven: &cache-maven
+  - key: "maven-local-repo"
+    policy: pull-push
+    paths:
+      - "$MAVEN_LOCAL_REPO"
+
+.script-curl: &curl
+  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o docker-compose.yaml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_SPRING_BOOT_MAVEN_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main\""
+  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o check-container-health.sh \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_CHECK_CONTAINER_HEALTH_SCRIPT_PATH/raw?ref=main\""
+
+.script-maven-setting: &script-maven-setting
+  - mkdir -p .m2
+  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o .m2/settings.xml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH/raw?ref=main\""
+
+sonarqube:
+  allow_failure: true
+  extends: .default
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  stage: quality
+  coverage: '/Total.*?(\d{1,3})%/'
+  cache:
+    - *cache-maven
+    - key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+      paths:
+        - "${SONAR_USER_HOME}/cache"
+  before_script:
+    - *script-maven-setting
+    - ls -lh .m2/settings.xml
+  script:
+    - mvn $MAVEN_CLI_OPTS verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+  after_script:
+    - grep -o '<tfoot>.*</tfoot>' target/site/jacoco/index.html
+  rules:
+    - if: $RUN_SONAR == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: jacoco
+        path: target/site/jacoco/jacoco.xml
+
+test:
+  extends: .default
+  stage: test
+  cache:
+    - *cache-maven
+  before_script:
+    - *script-maven-setting
+  script:
+    - mvn $MAVEN_CLI_OPTS test
+  rules:
+    - if: $TEST == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+
+build:
+  extends: .default
+  resource_group: $ENVIRONMENT
+  tags:
+    - build
+  stage: build
+  cache:
+    - *cache-maven
+  before_script:
+    - *script-maven-setting
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        ENVIRONMENT="production"
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        ENVIRONMENT="development"
+      else
+        ENVIRONMENT="$CI_COMMIT_BRANCH"
+      fi
+  script:
+    - mvn $MAVEN_CLI_OPTS clean spring-boot:build-image -DskipTests=true
+    - docker rmi $IMAGE_NAME:$ENVIRONMENT
+  rules:
+    - if: $BUILD == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+
+deploy-dev:
+  extends: .default
+  stage: deploy
+  tags:
+    - deploy
+    - development
+  resource_group: $ENVIRONMENT
+  variables:
+    ENVIRONMENT: "development"
+    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
+    VAULT_URI: $DEV_DOCKER_VAULT_URI
+    REPLICAS: $[[ inputs.dev-env-replicas ]]
+    SPRING_PROFILES_ACTIVE: deploy, docker, dev, $DEV_ADDITIONAL_SPRING_PROFILES
+    JAVA_OPTS: $[[ inputs.dev-java-opts ]]
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+        - .gitlab-ci.yml
+  before_script:
+    - *curl
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker compose -f docker-compose.yaml pull
+    - docker compose -f docker-compose.yaml down --remove-orphans
+    - docker compose -f docker-compose.yaml up -d
+    - chmod +x check-container-health.sh
+    - ./check-container-health.sh $CI_PROJECT_NAME $RETRIES $TIMEOUT
+    - docker image prune -f
+
+deploy-prod:
+  extends: .default
+  stage: deploy
+  tags:
+    - deploy
+    - production
+  resource_group: $ENVIRONMENT
+  variables:
+    ENVIRONMENT: "production"
+    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
+    SSH_PORT: $3A_APPS_VM_SSH_PORT
+    SSH_USER_HOST: $GB_USERNAME@$3A_APPS_VM_IP
+    SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
+    REPLICAS: $[[ inputs.prod-env-replicas ]]
+    SPRING_PROFILES_ACTIVE: deploy, docker, prod, $DEV_ADDITIONAL_SPRING_PROFILES
+    LOGSTASH_URI: ${PROD_LOGSTASH_URI}
+    JAVA_OPTS: $[[ inputs.prod-java-opts ]]
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
+      changes:
+        - pom.xml
+        - src/**/*
+        - .gitlab-ci.yml
+  before_script:
+    - *curl
+    - chmod og= $GB_SSH_PRIVATE_KEY
+    - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo -e PROJECT_NAME="$CI_PROJECT_NAME""\n"IMAGE_NAME="$IMAGE_NAME""\n" > .env
+    - echo -e VAULT_URI="$PROD_VAULT_URI""\n"VAULT_TOKEN="$PROD_VAULT_TOKEN""\n" >> .env
+    - echo -e REPLICAS="$REPLICAS""\n"SPRING_PROFILES_ACTIVE="$SPRING_PROFILES_ACTIVE""\n" >> .env
+    - echo -e LOGSTASH_URI="$LOGSTASH_URI""\n"GB_CA_KEY_PASSWORD="$GB_CA_KEY_PASSWORD""\n" >> .env
+    - echo -e JAVA_OPTS="$JAVA_OPTS""\n" >> .env
+    - export TEMP_DIR=$(ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mktemp -d /tmp/XXXXXXXXXXXXXXXXXXXX")
+    - scp $SSH_CONFIG -P $SSH_PORT .env docker-compose.yaml check-container-health.sh $SSH_USER_HOST:$TEMP_DIR/
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml pull
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME down --remove-orphans
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME up -d
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST chmod +x $TEMP_DIR/check-container-health.sh
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST $TEMP_DIR/check-container-health.sh $CI_PROJECT_NAME $RETRIES $TIMEOUT
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
