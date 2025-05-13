@@ -10,7 +10,7 @@ networks:
 services:
   gitlab:
     <<: *common
-    image: gitlab/gitlab-ee:17.5.0-ee.0
+    image: gitlab/gitlab-ee:17.11.2-ee.0
     container_name: gitlab
     hostname: gitlab.antonio3a.aaa
     ports:
@@ -26,7 +26,7 @@ services:
 
   gitlab-runner:
     <<: *common
-    image: gitlab/gitlab-runner:alpine-v17.11.0
+    image: gitlab/gitlab-runner:v17.11.1
     container_name: gitlab-runner
     hostname: gitlab-runner.antonio3a.aaa
     privileged: true
