@@ -1,5 +1,12 @@
 spec:
   inputs:
+    build:
+      description: Build the project
+      type: string
+      default: nooo
+      options:
+        - yesss
+        - nooo
     build-deploy-dev:
       description: Build and deploy in development environment
       type: string
@@ -21,12 +28,16 @@ stages:
   - deploy
 
 variables:
+  BUILD: $[[ inputs.build ]]
   BUILD_DEPLOY_DEV: $[[ inputs.build-deploy-dev ]]
   BUILD_DEPLOY_PROD: $[[ inputs.build-deploy-prod ]]
-  IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
+  ENVIRONMENT: environment
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
 
 .default:
   image: antonio3a/ubuntu:24.04-dev-tools
+  resource_group: $ENVIRONMENT
+  retry: 1
   tags:
     - cpdi
     - devops
@@ -35,63 +46,56 @@ variables:
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
 
-.script-npm-ng: &npm-ng
-  - npm install --force
-  - ng build --configuration $ENVIRONMENT
-
-.script-docker-build-push: &docker-build-push
-  - docker build --provenance false -t $IMAGE_NAME .
-  - docker push $IMAGE_NAME
-
 .script-curl: &curl
-  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o docker-compose.yaml \"https://gitlab.cpdi.dev/api/v4/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_ANGULAR_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main\""
+  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o docker-compose.yaml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_ANGULAR_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main\""
 
-.cahe: &cache
+.cache: &cache
   cache:
     key: node-modules-$CI_PROJECT_NAME
     paths:
       - node_modules
 
-.development:
+build:
+  stage: build
   extends: .default
-  variables:
-    ENVIRONMENT: development
+  tags:
+    - build
+  resource_group: $ENVIRONMENT
+  <<: *cache
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        ENVIRONMENT="production"
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        ENVIRONMENT="development"
+      else
+        ENVIRONMENT="$CI_COMMIT_BRANCH"
+      fi
+  script:
+    - npm install --force
+    - ng build --configuration $ENVIRONMENT
+    - docker build --provenance false -t $IMAGE_NAME:$ENVIRONMENT .
+    - docker push $IMAGE_NAME:$ENVIRONMENT
+    - docker rmi $IMAGE_NAME:$ENVIRONMENT
   rules:
+    - if: $BUILD == 'yesss'
     - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
-
-.production:
-  extends: .default
-  variables:
-    ENVIRONMENT: production
-  rules:
     - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
-
-build-dev:
-  stage: build
-  extends: .development
-  <<: *cache
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - *npm-ng
-    - *docker-build-push
-    - docker image prune -f
-
-build-prod:
-  stage: build
-  extends: .production
-  <<: *cache
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - *npm-ng
-    - *docker-build-push
-    - docker rmi $IMAGE_NAME
 
 deploy-dev:
   stage: deploy
-  extends: .development
+  extends: .default
+  tags:
+    - deploy
+    - development
+  resource_group: $ENVIRONMENT
+  environment:
+    name: $ENVIRONMENT
+    url: https://$CI_PROJECT_NAME.cpdi.dev
   variables:
+    ENVIRONMENT: "development"
+    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
     PROJECT_NAME: $CI_PROJECT_NAME
   before_script:
     - *curl
@@ -100,13 +104,25 @@ deploy-dev:
     - docker compose -f docker-compose.yaml pull
     - docker compose -f docker-compose.yaml down --remove-orphans
     - docker compose -f docker-compose.yaml up -d
+    - docker image prune -f
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
 
 deploy-prod:
   stage: deploy
-  extends: .production
+  extends: .default
+  tags:
+    - deploy
+    - production
+  resource_group: $ENVIRONMENT
+  environment:
+    name: $ENVIRONMENT
+    url: https://$CI_PROJECT_NAME.sinse.org
   variables:
-    SSH_PORT: $3A_APPS_VM_SSH_PORT
-    SSH_USER_HOST: $GB_USERNAME@$3A_APPS_VM_IP
+    ENVIRONMENT: "production"
+    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
+    SSH_PORT: $SSE_APPS_VM_SSH_PORT
+    SSH_USER_HOST: $GB_USERNAME@$SSE_APPS_VM_IP
     SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
   before_script:
     - *curl
@@ -121,3 +137,5 @@ deploy-prod:
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME up -d
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
