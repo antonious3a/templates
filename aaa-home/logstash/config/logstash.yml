@@ -1,7 +1,11 @@
-http.host: "0.0.0.0"
 xpack:
   monitoring:
     enabled: true
-    elasticsearch.hosts: ["http://elasticsearch.antonio3a.aaa:9200"]
+    elasticsearch:
+      hosts:
+        - "https://elasticsearch.antonio3a.aaa:9200"
+      username: elastic
+      password: ${AAA_PASS}
+
 path:
   config: /usr/share/logstash/pipeline
