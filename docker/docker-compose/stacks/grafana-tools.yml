@@ -6,7 +6,7 @@ x-common : &common
 services:
   grafana:
     <<: *common
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana:11.6.1
     container_name: grafana
     hostname: grafana.antonio3a.aaa
     ports:
