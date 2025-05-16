@@ -174,7 +174,7 @@ test:
 
 build:
   extends: .default
-  resource_group: $ENVIRONMENT
+  resource_group: $CI_COMMIT_BRANCH
   tags:
     - build
   stage: build
