@@ -6,6 +6,3 @@ xpack:
         - "https://elasticsearch.antonio3a.aaa:9200"
       username: elastic
       password: ${AAA_PASS}
-
-path:
-  config: /usr/share/logstash/pipeline

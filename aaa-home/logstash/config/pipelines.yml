@@ -1,0 +1,5 @@
+- pipeline.id: spring-boot-pipeline
+  path.config: "/usr/share/logstash/pipeline/01-spring-boot.conf"
+
+- pipeline.id: wordpress-pipeline
+  path.config: "/usr/share/logstash/pipeline/02-wordpress.conf"

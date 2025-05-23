@@ -45,6 +45,7 @@ services:
     volumes:
       - ${AAA_HOME}/logstash/pipeline:/usr/share/logstash/pipeline
       - ${AAA_HOME}/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ${AAA_HOME}/logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
       - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/logstash/config/certs
     ports:
       - "5000:5000"
