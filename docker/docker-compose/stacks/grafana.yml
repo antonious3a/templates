@@ -6,8 +6,8 @@ x-common : &common
 services:
   grafana:
     <<: *common
-    image: grafana/grafana:11.6.1
-    container_name: grafana
+    image: grafana/grafana:12.0.1
+    container_name: 3A-grafana
     hostname: grafana.antonio3a.aaa
     ports:
       - "3000:3000"
@@ -16,8 +16,8 @@ services:
 
   loki:
     <<: *common
-    image: grafana/loki:3.3.2
-    container_name: loki
+    image: grafana/loki:3.5.1
+    container_name: 3A-loki
     hostname: loki.antonio3a.aaa
     ports:
       - "3100:3100"
@@ -26,14 +26,20 @@ services:
 
   tempo:
     <<: *common
-    image: grafana/tempo:2.6.1
-    container_name: tempo
+    user: root
+    image: grafana/tempo:2.7.2
+    container_name: 3A-tempo
     hostname: tempo.antonio3a.aaa
     ports:
-      - "3200:3200"
-      - "9411:9411"
+      - "14268:14268"  # jaeger ingest
+      - "3200:3200"   # tempo
+      - "9095:9095" # tempo grpc
+      - "4317:4317"  # otlp grpc
+      - "4318:4318"  # otlp http
+      - "9411:9411"   # zipkin
     volumes:
       - ${AAA_HOME}/tempo/tempo.yaml:/etc/tempo.yaml
+      - tempo-vol:/var/tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
 
 networks:
@@ -43,5 +49,7 @@ networks:
 volumes:
   grafana-vol:
     external: true
-  grafana-loki-vol:
+  loki-vol:
+    external: true
+  tempo-vol:
     external: true

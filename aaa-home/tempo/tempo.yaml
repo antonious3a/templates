@@ -4,6 +4,7 @@ server:
 distributor:
   receivers:
     zipkin:
+      endpoint: "3A-tempo:9411"
     otlp:
       protocols:
         http:
@@ -17,10 +18,15 @@ distributor:
 
 storage:
   trace:
-    backend: s3
-    s3:
-      endpoint: minio.antonio3a.aaa:9000
-      bucket: grafana-tempo
-      insecure: true
-      access_key: access_key
-      secret_key: secret_key
+#    backend: s3
+#    s3:
+#      endpoint: minio.antonio3a.aaa:9000
+#      bucket: grafana-tempo
+#      insecure: true
+#      access_key: access_key
+#      secret_key: secret_key
+    backend: local                     # backend configuration to use
+    wal:
+      path: /var/tempo/wal             # where to store the wal locally
+    local:
+      path: /var/tempo/blocks
