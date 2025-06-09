@@ -4,7 +4,7 @@ x-common : &common
   restart: always
 
 networks:
-  3A-bridge:
+  aaa-bridge:
     external: true
 
 services:
