@@ -1,6 +1,6 @@
 x-common : &common
   networks:
-    - 3A-bridge
+    - aaa-bridge
   restart: always
 
 networks:
@@ -11,7 +11,7 @@ services:
   portainer:
     <<: *common
     image: portainer/portainer-ce:${PORTAINER_VERSION}
-    container_name: 3A-portainer
+    container_name: aaa-portainer
     hostname: portainer.antonio3a.aaa
     ports:
 #      - "8000:8000"
@@ -19,12 +19,12 @@ services:
       - "9443:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - 3A-portainer-data-vol:/data
+      - aaa-portainer-data-vol:/data
 
   portainer-agent:
     <<: *common
     image: portainer/agent:${PORTAINER_VERSION}
-    container_name: 3A-portainer-agent
+    container_name: aaa-portainer-agent
     hostname: portainer-agent.antonio3a.aaa
     ports:
       - "9001:9001"
@@ -33,5 +33,5 @@ services:
       - /var/lib/docker/volumes:/var/lib/docker/volumes
 
 volumes:
-  3A-portainer-data-vol:
+  aaa-portainer-data-vol:
     external: true
