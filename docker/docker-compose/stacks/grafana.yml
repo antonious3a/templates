@@ -1,6 +1,6 @@
 x-common : &common
   networks:
-    - antonio3a-bridge
+    - aaa-bridge
   restart: unless-stopped
 
 services:
@@ -43,7 +43,7 @@ services:
     command: [ "-config.file=/etc/tempo.yaml" ]
 
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
 
 volumes:

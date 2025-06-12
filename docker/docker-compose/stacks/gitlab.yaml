@@ -1,10 +1,10 @@
 x-common: &common
   networks:
-    - antonio3a-bridge
+    - aaa-bridge
   restart: unless-stopped
 
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
 
 services:

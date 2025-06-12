@@ -1,7 +1,7 @@
 x-common: &common
   image: antonio3a/aaa-eureka-server
   networks:
-    - antonio3a-bridge
+    - aaa-bridge
   restart: unless-stopped
 
 x-common-env: &common-env
@@ -47,5 +47,5 @@ services:
       - "8763:8763"
 
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
