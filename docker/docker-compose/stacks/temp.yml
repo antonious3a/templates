@@ -1,12 +1,14 @@
 x-common : &common
   networks:
-    - antonio3a-bridge
+    - aaa-bridge
   restart: unless-stopped
 
 services:
+  antonio3a:
+    shm_size: '25m'
   
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
 
 volumes:

@@ -2,7 +2,7 @@
 docker run -d \
  --restart always \
  --name portainer \
- --net antonio3a-bridge \
+ --net aaa-bridge \
  --hostname portainer.antonio3a.aaa \
  -p 9000:9000 \
  -v /var/run/docker.sock:/var/run/docker.sock \

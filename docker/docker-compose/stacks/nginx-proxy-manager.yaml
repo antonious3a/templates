@@ -1,7 +1,7 @@
 x-common: &common
   networks:
-    - antonio3a-bridge
-  restart: unless-stopped
+    - aaa-bridge
+  restart: always
 
 services:
   nginx-proxy-manager:
@@ -23,15 +23,15 @@ services:
       DB_POSTGRES_PASSWORD: ${AAA_PASS}
       DB_POSTGRES_NAME: nginx_proxy_manager
     volumes:
-      - nginx-proxy-manager-data-vol:/data
-      - nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
+      - aaa-nginx-proxy-manager-data-vol:/data
+      - aaa-nginx-proxy-manager-letsencrypt-vol:/etc/letsencrypt
 
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
 
 volumes:
-  nginx-proxy-manager-data-vol:
+  aaa-nginx-proxy-manager-data-vol:
     external: true
-  nginx-proxy-manager-letsencrypt-vol:
+  aaa-nginx-proxy-manager-letsencrypt-vol:
     external: true
