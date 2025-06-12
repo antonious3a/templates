@@ -1,16 +1,16 @@
 x-common : &common
   networks:
-    - antonio3a-bridge
+    - aaa-bridge
   restart: unless-stopped
 
 networks:
-  antonio3a-bridge:
+  aaa-bridge:
     external: true
 
 services:
   mongodb:
     <<: *common
-    image: mongo:8.0.8
+    image: mongo:8.0.10
     container_name: mongodb
     hostname: mongodb.antonio3a.aaa
     environment:
@@ -19,8 +19,8 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongodb-data-vol:/data/db
-      - mongodb-config-vol:/data/configdb
+      - aaa-mongodb-data-vol:/data/db
+      - aaa-mongodb-config-vol:/data/configdb
 
   neo4j:
     image: neo4j:5.26.0-enterprise
@@ -38,9 +38,8 @@ services:
       - "7474:7474"
       - "7687:7687"
     volumes:
-      - neo4j-data-vol:/data
-      - neo4j-logs-vol:/logs
-      - neo4j-plugins-vol:/plugins
+      - aaa-neo4j-data-vol:/data
+      - aaa-neo4j-logs-vol:/logs
       - $AAA_HOME/neo4j/conf/apoc.conf:/var/lib/neo4j/conf/apoc.conf
     <<: *common
     deploy:
@@ -49,13 +48,13 @@ services:
           memory: 1G
 
 volumes:
-  mongodb-data-vol:
+  aaa-mongodb-data-vol:
     external: true
-  mongodb-config-vol:
+  aaa-mongodb-config-vol:
     external: true
-  neo4j-data-vol:
+  aaa-neo4j-data-vol:
     external: true
-  neo4j-logs-vol:
+  aaa-neo4j-logs-vol:
     external: true
-  neo4j-plugins-vol:
+  aaa-neo4j-plugins-vol:
     external: true
