@@ -11,6 +11,7 @@ RUN apt update && \
     ca-certificates \
     curl \
     git \
+    iputils-ping \
     openssh-client \
     tar \
     unzip \
@@ -68,7 +69,7 @@ RUN bash /tmp/sdk-install.sh && \
 ############## Java #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 21.0.6-tem
+    sdk install java 21.0.7-tem
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ###############################################
@@ -77,7 +78,7 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 ############## Maven #########################
 ENV MAVEN_HOME=$HOME/.sdkman/candidates/maven/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install maven
+    sdk install maven 3.9.10
 
 ENV PATH="$MAVEN_HOME/bin:$PATH"
 ###############################################
@@ -86,7 +87,7 @@ ENV PATH="$MAVEN_HOME/bin:$PATH"
 ############## Gradle #########################
 ENV GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install gradle
+    sdk install gradle 8.14.2
 
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 ###############################################
