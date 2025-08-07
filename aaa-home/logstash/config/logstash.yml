@@ -1,8 +1,12 @@
+node.name: antonio3a-logstash
 xpack:
   monitoring:
+    allow_legacy_collection: true
     enabled: true
     elasticsearch:
-      hosts:
-        - "https://elasticsearch.antonio3a.aaa:9200"
-      username: elastic
+      username: ${AAA_USER}
       password: ${AAA_PASS}
+      hosts:
+        - "https://elasticsearch01.antonio3a.aaa:9200"
+        - "https://elasticsearch02.antonio3a.aaa:9200"
+        - "https://elasticsearch03.antonio3a.aaa:9200"
