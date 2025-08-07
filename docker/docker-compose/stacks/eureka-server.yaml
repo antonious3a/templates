@@ -1,0 +1,26 @@
+x-common: &common
+  image: antonio3a/eureka-server:1.0.0
+  networks:
+    - aaa-bridge
+  restart: unless-stopped
+
+x-common-env: &common-env
+  EUREKA_ENVIRONMENT: development
+  EUREKA_CLIENT_FETCH-REGISTRY: false
+  EUREKA_CLIENT_REGISTER-WITH-EUREKA: false
+
+services:
+  eureka-1:
+    <<: *common
+    container_name: eureka-1
+    hostname: eureka1.antonio3a.aaa
+    environment:
+      <<: *common-env
+      SERVER_PORT: 8761
+      SPRING_PROFILES_ACTIVE: peer1
+    ports:
+      - "8761:8761"
+
+networks:
+  aaa-bridge:
+    external: true
