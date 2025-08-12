@@ -49,7 +49,7 @@ services:
       - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/logstash/config/certs
     ports:
       - "5000:5000"
-      - "9600:9600"
+      #- "9600:9600"
     depends_on:
         elasticsearch:
           condition: service_started
@@ -61,6 +61,7 @@ services:
     hostname: kibana.antonio3a.aaa
     environment:
       - SERVERNAME=kibana
+      - SERVER_PUBLICBASEURL=https://kibana.antonio3a.net
       - ELASTICSEARCH_HOSTS=https://elasticsearch.antonio3a.aaa:9200
       - ELASTICSEARCH_SERVICEACCOUNTTOKEN=token
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/antonio3a-ca.crt
@@ -79,8 +80,6 @@ services:
     volumes:
       - ${AAA_HOME}/ssl/certs/antonio3a:/usr/share/kibana/config/certs
       - kibana-data-vol:/usr/share/kibana/data
-
-
 
   fleet-server:
     depends_on:
@@ -121,7 +120,6 @@ services:
       - KIBANA_FLEET_USERNAME=elastic
       - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
       - KIBANA_HOST=https://kibana:5601
-
 
 networks:
   aaa-bridge:
