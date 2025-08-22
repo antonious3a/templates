@@ -1,8 +1,8 @@
 node.name: antonio3a-logstash
 xpack:
   monitoring:
-    allow_legacy_collection: true
     enabled: true
+    allow_legacy_collection: true
     elasticsearch:
       username: ${AAA_USER}
       password: ${AAA_PASS}
