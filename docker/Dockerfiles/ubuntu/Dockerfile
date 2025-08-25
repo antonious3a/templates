@@ -24,7 +24,7 @@ RUN apt update && \
 
 
 ############### Node & Angular #########################
-ENV NODE_VERSION=22.14.0
+ENV NODE_VERSION=22.18.0
 ENV NODE_DIST=node-v$NODE_VERSION-linux-x64
 ENV NODE_TAR=$NODE_DIST.tar.xz
 ENV NODE_URL=https://nodejs.org/dist/v$NODE_VERSION/$NODE_TAR
@@ -69,7 +69,7 @@ RUN bash /tmp/sdk-install.sh && \
 ############## Java #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 21.0.7-tem
+    sdk install java 21.0.8-tem
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ###############################################
@@ -78,7 +78,7 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 ############## Maven #########################
 ENV MAVEN_HOME=$HOME/.sdkman/candidates/maven/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install maven 3.9.10
+    sdk install maven 3.9.11
 
 ENV PATH="$MAVEN_HOME/bin:$PATH"
 ###############################################
@@ -87,7 +87,7 @@ ENV PATH="$MAVEN_HOME/bin:$PATH"
 ############## Gradle #########################
 ENV GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install gradle 8.14.2
+    sdk install gradle 9.0.0
 
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 ###############################################
@@ -102,3 +102,5 @@ RUN docker -v && \
     gradle --version
 
 CMD ["/bin/bash"]
+
+### docker build -t antonio3a/ubuntu:24.04-dev-tools .
