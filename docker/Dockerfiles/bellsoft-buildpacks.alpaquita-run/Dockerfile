@@ -5,7 +5,10 @@ USER root
 
 RUN apk update && \
     apk add --no-cache \
-    curl
+    curl \
+    fontconfig \
+    freetype \
+    ttf-dejavu
 
 USER cnb
 
