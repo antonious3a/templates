@@ -6,7 +6,7 @@ x-common : &common
 services:
   grafana:
     <<: *common
-    image: grafana/grafana:12.0.1
+    image: grafana/grafana:12.1.1
     container_name: 3A-grafana
     hostname: grafana.antonio3a.aaa
     ports:
@@ -16,7 +16,7 @@ services:
 
   loki:
     <<: *common
-    image: grafana/loki:3.5.1
+    image: grafana/loki:3.5.5
     container_name: 3A-loki
     hostname: loki.antonio3a.aaa
     ports:
@@ -27,7 +27,7 @@ services:
   tempo:
     <<: *common
     user: root
-    image: grafana/tempo:2.7.2
+    image: grafana/tempo:2.8.2
     container_name: 3A-tempo
     hostname: tempo.antonio3a.aaa
     ports:
