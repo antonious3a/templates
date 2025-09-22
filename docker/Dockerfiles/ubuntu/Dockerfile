@@ -69,7 +69,7 @@ RUN bash /tmp/sdk-install.sh && \
 ############## Java #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 21.0.8-tem
+    sdk install java 25-oracle
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ###############################################
@@ -87,7 +87,7 @@ ENV PATH="$MAVEN_HOME/bin:$PATH"
 ############## Gradle #########################
 ENV GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install gradle 9.0.0
+    sdk install gradle 9.1.0
 
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 ###############################################
