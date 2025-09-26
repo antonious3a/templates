@@ -23,7 +23,7 @@ services:
 
   postgresql:
     <<: *common
-    image: postgres:17.4
+    image: postgres:17.6
     container_name: postgresql
     hostname: postgresql.antonio3a.aaa
     environment:
