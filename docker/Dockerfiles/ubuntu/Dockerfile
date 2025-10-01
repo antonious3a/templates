@@ -69,7 +69,7 @@ RUN bash /tmp/sdk-install.sh && \
 ############## Java #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 25-tem
+    sdk install java 21.0.8-tem
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ###############################################
