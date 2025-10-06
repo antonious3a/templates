@@ -6,10 +6,10 @@ USER root
 RUN apt update && \
     apt install -y \
     --no-install-recommends \
-    curl && \
-    tesseract-orc && \
-    tesseract-orc-eng && \
-    tesseract-orc-por && \
+    curl \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    tesseract-ocr-por && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
