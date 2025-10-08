@@ -38,11 +38,6 @@ variables:
   image: antonio3a/ubuntu:24.04-dev-tools
   resource_group: $ENVIRONMENT
   retry: 1
-  tags:
-    - cpdi
-    - devops
-    - nodejs
-    - angular
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
 
@@ -59,8 +54,12 @@ build:
   stage: build
   extends: .default
   tags:
+    - cpdi
+    - devops
+    - nodejs
+    - angular
     - build
-  resource_group: $ENVIRONMENT
+  resource_group: $CI_COMMIT_BRANCH
   <<: *cache
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -87,6 +86,10 @@ deploy-dev:
   stage: deploy
   extends: .default
   tags:
+    - cpdi
+    - devops
+    - nodejs
+    - angular
     - deploy
     - development
   resource_group: $ENVIRONMENT
@@ -112,6 +115,10 @@ deploy-prod:
   stage: deploy
   extends: .default
   tags:
+    - cpdi
+    - devops
+    - nodejs
+    - angular
     - deploy
     - production
   resource_group: $ENVIRONMENT
