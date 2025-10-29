@@ -24,7 +24,7 @@ RUN apt update && \
 
 
 ############### Node & Angular #########################
-ENV NODE_VERSION=22.20.0
+ENV NODE_VERSION=24.11.0
 ENV NODE_DIST=node-v$NODE_VERSION-linux-x64
 ENV NODE_TAR=$NODE_DIST.tar.xz
 ENV NODE_URL=https://nodejs.org/dist/v$NODE_VERSION/$NODE_TAR
@@ -70,7 +70,7 @@ RUN bash /tmp/sdk-install.sh && \
 ############## Java #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 25-tem
+    sdk install java 25.0.1-tem
 
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ###############################################
@@ -88,7 +88,7 @@ ENV PATH="$MAVEN_HOME/bin:$PATH"
 ############## Gradle #########################
 ENV GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install gradle 9.1.0
+    sdk install gradle 9.2.0
 
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 ###############################################
