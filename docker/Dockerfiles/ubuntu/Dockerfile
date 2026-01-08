@@ -66,8 +66,15 @@ RUN bash /tmp/sdk-install.sh && \
     rm /tmp/sdk-install.sh
 ###############################################
 
+############## Java 21 #########################
+ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
+    sdk install java 21.0.9-tem
 
-############## Java #########################
+ENV PATH="$JAVA_HOME/bin:$PATH"
+###############################################
+
+############## Java 25 #########################
 ENV JAVA_HOME=$HOME/.sdkman/candidates/java/current
 RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     sdk install java 25.0.1-tem
