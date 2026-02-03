@@ -1,4 +1,4 @@
-FROM bellsoft/buildpacks.alpaquita-run:musl
+FROM docker.io/bellsoft/buildpacks.alpaquita-run:musl
 LABEL authors="antonio3a"
 
 USER root

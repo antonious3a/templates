@@ -1,4 +1,4 @@
-FROM paketobuildpacks/ubuntu-noble-run:0.0.47
+FROM docker.io/paketobuildpacks/ubuntu-noble-run:0.0.51
 LABEL authors="antonio3a"
 
 USER root
@@ -15,4 +15,4 @@ RUN apt update && \
 
 USER cnb
 
-# docker build -t antonio3a/paketobuildpacks-ubuntu-noble-run:0.0.45 .
+# docker build -t antonio3a/paketobuildpacks-ubuntu-noble-run:0.0.51 .
