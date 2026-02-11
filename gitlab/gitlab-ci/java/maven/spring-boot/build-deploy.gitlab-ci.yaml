@@ -1,5 +1,13 @@
 spec:
   inputs:
+    java-version:
+      description: Java version to use for the jobs
+      type: string
+      default: "25"
+      options:
+        - "17"
+        - "21"
+        - "25"
     test:
       description: Run tests
       type: string
@@ -54,21 +62,20 @@ spec:
     dev-additional-spring-profiles:
       description: Additional Spring profiles for the development environment
       type: string
-      default: "dev"
+      default: "default"
     prod-additional-spring-profiles:
       description: Additional Spring profiles for the production environment
       type: string
-      default: "prod"
+      default: "default"
     runner:
       description: Run the jobs on a specific runner
       type: string
-      default: cpdi
+      default: aaa-runner
       options:
-        - cpdi
-        - cpdi-runner
-        - cpdi-runner-#01
-        - cpdi-runner-#02
-        - cpdi-runner-#03
+        - aaa-runner
+        - aaa-runner-#01
+        - aaa-runner-#02
+        - aaa-runner-#03
 ---
 
 stages:
@@ -76,15 +83,10 @@ stages:
   - build
   - deploy
 
-.default:
-  image: antonio3a/ubuntu:24.04-dev-tools
-  retry: 1
-  tags:
-    - $RUNNER
-  after_script:
-    - echo Job started by user "$GITLAB_USER_NAME" in branch "$CI_COMMIT_BRANCH" finished with status "$CI_JOB_STATUS"!
-
 variables:
+  MAVEN_VERSION: 3.9.12
+  JAVA_VERSION: $[[ inputs.java-version ]]
+
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
   TEST: $[[ inputs.test ]]
@@ -113,24 +115,27 @@ variables:
 
   RUNNER: $[[ inputs.runner ]]
 
+.default:
+  image: antonio3a/ubuntu:24.04-dev-tools
+  retry: 1
+  tags:
+    - aaa
+    - $RUNNER
+  after_script:
+    - echo Job started by user "$GITLAB_USER_NAME" in branch "$CI_COMMIT_BRANCH" finished with status "$CI_JOB_STATUS"!
+
 .cache-maven: &cache-maven
   - key: "maven-local-repo"
     policy: pull-push
     paths:
       - "$MAVEN_LOCAL_REPO"
 
-.script-curl-docker-compose: &script-curl-docker-compose
-  - |
-    if [ ! -f docker-compose.yaml ]; then
-      curl -fsSL -H "PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" -o docker-compose.yaml "$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_SPRING_BOOT_MAVEN_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main"
-    fi
-
-.script-curl-container-health: &script-curl-container-health
-  - "curl -fsSL -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o check-container-health.sh \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_CHECK_CONTAINER_HEALTH_SCRIPT_PATH/raw?ref=main\""
-
-.script-maven-setting: &script-maven-setting
+.script-wget-maven-setting: &script-wget-maven-setting
   - mkdir -p .m2
-  - "curl -fsSL -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o .m2/settings.xml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH/raw?ref=main\""
+  - |
+    wget -qO .m2/settings.xml \
+      --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+      "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH}/raw?ref=main"
 
 .pom-src-changeset-template: &pom-src-changeset-template
   changes:
@@ -139,6 +144,7 @@ variables:
 
 test:
   extends: .default
+  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   stage: test
   coverage: '/Total.*?(\d{1,3})%/'
   variables:
@@ -149,7 +155,7 @@ test:
       paths:
         - "${SONAR_USER_HOME}/cache"
   before_script:
-    - *script-maven-setting
+    - *script-wget-maven-setting
   script:
     - mvn $MAVEN_CLI_OPTS verify
     - |
@@ -169,13 +175,20 @@ test:
         path: target/site/jacoco/jacoco.xml
 
 build:
+  tags:
+    - aaa
+    - builder
   extends: .default
+  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   resource_group: $CI_COMMIT_BRANCH
   stage: build
   cache:
     - *cache-maven
   before_script:
-    - *script-maven-setting
+    - apk update
+    - apk add --no-cache docker-cli
+  script:
+    - *script-wget-maven-setting
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
@@ -185,23 +198,29 @@ build:
       else
         export ENVIRONMENT="$CI_COMMIT_BRANCH"
       fi
-  script:
+
     - mvn $MAVEN_CLI_OPTS clean spring-boot:build-image -DskipTests=true
     - docker rmi $CI_REGISTRY_IMAGE:$ENVIRONMENT
   rules:
-    - if: ( $BUILD == "yesss" ) || ( $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss" ) || ( $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss" )
+    - if: ( $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss" ) || ( $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss" )
       <<: *pom-src-changeset-template
+    - if: $BUILD == "yesss"
 
 .deploy-template: &deploy-template
   extends: .default
+  image: docker.io/alpine:3.23.3
   stage: deploy
   resource_group: $CI_COMMIT_BRANCH
   variables:
     SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
     PROJECT_DIR: /opt/docker/compose/stacks/$CI_PROJECT_NAME
+    DOCKER_CONFIG: $PROJECT_DIR/.docker
     RETRIES: 10
     TIMEOUT: 30
   before_script:
+    - apk update
+    - apk add --no-cache openssh-client
+  script:
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         env="prod"
@@ -214,65 +233,80 @@ build:
       fi
       
       VAR_VM_IP=${ENV}_VM_IP
-      export VM_IP=${!VAR_VM_IP}
+      export VM_IP=$(printenv $VAR_VM_IP)
       
       VAR_SSH_PORT=${ENV}_VM_SSH_PORT
-      export SSH_PORT=${!VAR_SSH_PORT}
+      export SSH_PORT=$(printenv $VAR_SSH_PORT)
       
       export SSH_USER_HOST="$GB_USERNAME@$VM_IP"
       
       VAR_JAVA_OPTS=${ENV}_JAVA_OPTS
-      export JAVA_OPTS=${!VAR_JAVA_OPTS}
+      export JAVA_OPTS=$(printenv $VAR_JAVA_OPTS)
       
       VAR_REPLICAS=${ENV}_REPLICAS
-      export REPLICAS=${!VAR_REPLICAS}
+      export REPLICAS=$(printenv $VAR_REPLICAS)
       
       VAR_VAULT_TOKEN=${ENV}_VAULT_TOKEN
-      export VAULT_TOKEN=${!VAR_VAULT_TOKEN}
+      export VAULT_TOKEN=$(printenv $VAR_VAULT_TOKEN)
       
       VAR_LOGSTASH_URI=${ENV}_LOGSTASH_URI_SPRING_BOOT
-      export LOGSTASH_URI=${!VAR_LOGSTASH_URI}
+      export LOGSTASH_URI=$(printenv $VAR_LOGSTASH_URI)
       
       VAR_ADD_SPRING_PROFILES="${ENV}_ADD_SPRING_PROFILES"
-      export SPRING_PROFILES_ACTIVE="deploy, docker, $env, $ENVIRONMENT, ${!VAR_ADD_SPRING_PROFILES}"
+      export ADD_SPRING_PROFILES=$(printenv $VAR_ADD_SPRING_PROFILES)
+      export SPRING_PROFILES_ACTIVE="deploy, docker, $env, $ENVIRONMENT, $ADD_SPRING_PROFILES"
 
-    - *script-curl-container-health
-    - *script-curl-docker-compose
-    - chmod og= $GB_SSH_PRIVATE_KEY
-    - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
+
+    - |
+      if [ ! -f compose.yaml ]; then
+        wget -qO compose.yaml \
+        --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_SPRING_BOOT_MAVEN_COMPOSE_TEMPLATE_PATH}/raw?ref=main"
+      fi
+    - |
+      wget -qO check-container-health.sh \
+        --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_CHECK_CONTAINER_HEALTH_SCRIPT_PATH}/raw?ref=main"
+
     - echo -e PROJECT_NAME="$CI_PROJECT_NAME""\n"IMAGE_NAME="$CI_REGISTRY_IMAGE:$ENVIRONMENT""\n" > .env
     - echo -e VAULT_URI="$DOCKER_VAULT_URI""\n"VAULT_TOKEN="$VAULT_TOKEN""\n" >> .env
     - echo -e SPRING_PROFILES_ACTIVE="$SPRING_PROFILES_ACTIVE""\n"JAVA_OPTS="$JAVA_OPTS""\n" >> .env
     - echo -e REPLICAS="$REPLICAS""\n"LOGSTASH_URI="$LOGSTASH_URI""\n" >> .env
     - echo -e ENVIRONMENT="$ENVIRONMENT""\n" >> .env
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mkdir -p $PROJECT_DIR"
-    - scp $SSH_CONFIG -P $SSH_PORT .env docker-compose.yaml check-container-health.sh $SSH_USER_HOST:$PROJECT_DIR/
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/docker-compose.yaml pull
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/docker-compose.yaml down --remove-orphans
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/docker-compose.yaml up -d
+
+    - chmod og= $GB_SSH_PRIVATE_KEY
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mkdir -p {$PROJECT_DIR,$DOCKER_CONFIG}"
+    - scp $SSH_CONFIG -P $SSH_PORT .env compose.yaml check-container-health.sh $SSH_USER_HOST:$PROJECT_DIR/
+
+    - |
+      echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST \
+        "DOCKER_CONFIG=$DOCKER_CONFIG docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY"
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "DOCKER_CONFIG=$DOCKER_CONFIG docker compose -f $PROJECT_DIR/compose.yaml pull"
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml down --remove-orphans
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml up -d
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST chmod +x $PROJECT_DIR/check-container-health.sh
     - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST $PROJECT_DIR/check-container-health.sh $CI_PROJECT_NAME $RETRIES $TIMEOUT
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $PROJECT_DIR/.env
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f || echo 'Prune already running,,, skipping...'
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $PROJECT_DIR/.env $DOCKER_CONFIG
 
-.changeset-template: &changeset-template
+.deploy-changeset-template: &deploy-changeset-template
   changes:
     - pom.xml
     - src/**/*
     - .gitlab-ci.yml
-    - docker-compose.yaml
+    - compose.yaml
 
 deploy-dev:
   <<: *deploy-template
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss"
-      <<: *changeset-template
+      <<: *deploy-changeset-template
 
 deploy-prod:
   <<: *deploy-template
   tags:
-    - cpdi-runner-#01
+    - aaa
+    - aaa-runner-#01
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
-      <<: *changeset-template
+      <<: *deploy-changeset-template
