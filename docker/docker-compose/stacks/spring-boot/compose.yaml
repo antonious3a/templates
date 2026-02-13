@@ -1,0 +1,26 @@
+services:
+  app:
+    image: ${IMAGE_NAME}
+    hostname: ${PROJECT_NAME}.docker.cpdi
+    networks:
+      - cpdi-bridge
+    restart: always
+    environment:
+      TZ: Africa/Luanda
+      JAVA_OPTS: ${JAVA_OPTS}
+      VAULT_URI: ${VAULT_URI}
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      LOGSTASH_URI: ${LOGSTASH_URI}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    healthcheck:
+      test: wget -qO- --no-check-certificate http://localhost/actuator/health/readiness | grep -q UP
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 1m
+    deploy:
+      replicas: ${REPLICAS}
+
+networks:
+  cpdi-bridge:
+    external: true

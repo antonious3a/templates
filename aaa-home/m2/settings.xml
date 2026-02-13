@@ -1,0 +1,40 @@
+<settings>
+    <pluginGroups>
+        <pluginGroup>org.sonarsource.scanner.maven</pluginGroup>
+    </pluginGroups>
+    <profiles>
+        <profile>
+            <id>sonar</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <sonar.host.url>
+                    https://sonarqube.aaa.dev
+                </sonar.host.url>
+                <sonar.token>${AAA_SONAR_TOKEN}</sonar.token>
+            </properties>
+        </profile>
+    </profiles>
+    <servers>
+        <server>
+            <id>aaa-gitlab-maven</id>
+            <configuration>
+                <httpHeaders>
+                    <property>
+                        <name>Private-Token</name>
+                        <value>${AAA_GITLAB_TOKEN}</value>
+                    </property>
+                </httpHeaders>
+            </configuration>
+        </server>
+    </servers>
+    <!--<mirrors>
+        <mirror>
+            <id>aaa-gitlab-maven</id>
+            <name>AAA GitLab proxy of central repo</name>
+            <url>$CI_API_V4_URL/packages/maven</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>-->
+</settings>
