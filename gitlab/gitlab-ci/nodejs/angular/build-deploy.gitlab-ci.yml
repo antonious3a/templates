@@ -7,14 +7,14 @@ spec:
       options:
         - yesss
         - nooo
-    build-deploy-dev:
+    deploy-dev:
       description: Build and deploy in development environment
       type: string
       default: nooo
       options:
         - yesss
         - nooo
-    build-deploy-prod:
+    deploy-prod:
       description: Build and deploy in production environment
       type: string
       default: nooo
@@ -29,120 +29,113 @@ stages:
 
 variables:
   BUILD: $[[ inputs.build ]]
-  BUILD_DEPLOY_DEV: $[[ inputs.build-deploy-dev ]]
-  BUILD_DEPLOY_PROD: $[[ inputs.build-deploy-prod ]]
-  ENVIRONMENT: environment
-  IMAGE_NAME: $CI_REGISTRY_IMAGE
+  DEPLOY_DEV: $[[ inputs.deploy-dev ]]
+  DEPLOY_PROD: $[[ inputs.deploy-prod ]]
+  ENVIRONMENT: $CI_COMMIT_BRANCH
 
 .default:
-  image: antonio3a/ubuntu:24.04-dev-tools
-  resource_group: $ENVIRONMENT
+  tags:
+    - aaa
+  resource_group: $CI_COMMIT_BRANCH
   retry: 1
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
 
-.script-curl: &curl
-  - "curl -H \"PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}\" -o docker-compose.yaml \"$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_ANGULAR_DOCKER_COMPOSE_TEMPLATE_PATH/raw?ref=main\""
-
-.cache: &cache
+build:
+  stage: build
+  extends: .default
+  image: docker.io/node:24.13.0-alpine
   cache:
     key: node-modules-$CI_PROJECT_NAME
     paths:
       - node_modules
-
-build:
-  stage: build
-  extends: .default
-  tags:
-    - cpdi
-    - devops
-    - nodejs
-    - angular
-    - build
-  resource_group: $CI_COMMIT_BRANCH
-  <<: *cache
   before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - apk update
+    - apk add --no-cache docker-cli docker-cli-buildx
+  script:
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         ENVIRONMENT="production"
       elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
         ENVIRONMENT="development"
-      else
-        ENVIRONMENT="$CI_COMMIT_BRANCH"
       fi
-  script:
+
+    - npm install -g @angular/cli
     - npm install --force
     - ng build --configuration $ENVIRONMENT
-    - docker build --provenance false -t $IMAGE_NAME:$ENVIRONMENT .
-    - docker push $IMAGE_NAME:$ENVIRONMENT
-    - docker rmi $IMAGE_NAME:$ENVIRONMENT
+
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build --push --provenance false -t $CI_REGISTRY_IMAGE:$ENVIRONMENT .
+    - docker rmi $CI_REGISTRY_IMAGE:$ENVIRONMENT
   rules:
     - if: $BUILD == 'yesss'
-    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
-    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
+    - if: $CI_COMMIT_BRANCH == 'develop' && $DEPLOY_DEV == 'yesss'
+    - if: $CI_COMMIT_BRANCH == 'main' && $DEPLOY_PROD == 'yesss'
+
+.deploy-template: &deploy-template
+  extends: .default
+  image: docker.io/alpine:3.23.3
+  stage: deploy
+  variables:
+    SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
+    PROJECT_DIR: /opt/docker/compose/stacks/$CI_PROJECT_NAME
+    DOCKER_CONFIG: $PROJECT_DIR/.docker
+    RETRIES: 10
+    TIMEOUT: 30
+  before_script:
+    - apk update
+    - apk add --no-cache openssh-client
+  script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        env="prod"
+        ENV="PROD"
+        ENVIRONMENT="production"
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        env="dev"
+        ENV="DEV"
+        ENVIRONMENT="development"
+      fi
+      
+      VAR_VM_IP=${ENV}_VM_IP
+      export VM_IP=$(printenv $VAR_VM_IP)
+      
+      VAR_SSH_PORT=${ENV}_VM_SSH_PORT
+      export SSH_PORT=$(printenv $VAR_SSH_PORT)
+      
+      export SSH_USER_HOST="$GB_USERNAME@$VM_IP"
+
+    - |
+      if [ ! -f compose.yaml ]; then
+        wget -qO compose.yaml \
+        --header "PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+        "$CI_API_V4_URL/projects/$TEMPLATES_PROJECT_ID/repository/files/$TEMPLATES_PROJECT_ANGULAR_COMPOSE_TEMPLATE_PATH/raw?ref=main"
+      fi
+
+    - echo -e PROJECT_NAME="$CI_PROJECT_NAME""\n"IMAGE_NAME="$CI_REGISTRY_IMAGE:$ENVIRONMENT""\n" > .env
+    - echo -e ENVIRONMENT="$ENVIRONMENT""\n" >> .env
+
+    - chmod og= $GB_SSH_PRIVATE_KEY
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mkdir -p {$PROJECT_DIR,$DOCKER_CONFIG}"
+    - scp $SSH_CONFIG -P $SSH_PORT .env compose.yaml $SSH_USER_HOST:$PROJECT_DIR/
+
+    - |
+       echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST \
+         "DOCKER_CONFIG=$DOCKER_CONFIG docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY"
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "DOCKER_CONFIG=$DOCKER_CONFIG docker compose  -f $PROJECT_DIR/compose.yaml pull"
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml down --remove-orphans
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml up -d
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f || echo 'Prune already running,,, skipping...'
+    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $PROJECT_DIR/.env $DOCKER_CONFIG
 
 deploy-dev:
-  stage: deploy
-  extends: .default
-  tags:
-    - cpdi
-    - devops
-    - nodejs
-    - angular
-    - deploy
-    - development
-  resource_group: $ENVIRONMENT
-  environment:
-    name: $ENVIRONMENT
-    url: https://$CI_PROJECT_NAME.cpdi.dev
-  variables:
-    ENVIRONMENT: "development"
-    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
-    PROJECT_NAME: $CI_PROJECT_NAME
-  before_script:
-    - *curl
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - docker compose -f docker-compose.yaml pull
-    - docker compose -f docker-compose.yaml down --remove-orphans
-    - docker compose -f docker-compose.yaml up -d
-    - docker image prune -f
+  <<: *deploy-template
   rules:
-    - if: $CI_COMMIT_BRANCH == 'develop' && $BUILD_DEPLOY_DEV == 'yesss'
+    - if: $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss"
 
 deploy-prod:
-  stage: deploy
-  extends: .default
+  <<: *deploy-template
   tags:
-    - cpdi
-    - devops
-    - nodejs
-    - angular
-    - deploy
-    - production
-  resource_group: $ENVIRONMENT
-  environment:
-    name: $ENVIRONMENT
-    url: https://$CI_PROJECT_NAME.sinse.org
-  variables:
-    ENVIRONMENT: "production"
-    IMAGE_NAME: $CI_REGISTRY_IMAGE:$ENVIRONMENT
-    SSH_PORT: $SSE_APPS_VM_SSH_PORT
-    SSH_USER_HOST: $GB_USERNAME@$SSE_APPS_VM_IP
-    SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
-  before_script:
-    - *curl
-    - chmod og= $GB_SSH_PRIVATE_KEY
-    - echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - echo -e PROJECT_NAME="$CI_PROJECT_NAME""\n"IMAGE_NAME="$IMAGE_NAME" > .env
-    - export TEMP_DIR=$(ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mktemp -d /tmp/XXXXXXXXXXXXXXXXXXXX")
-    - scp $SSH_CONFIG -P $SSH_PORT .env docker-compose.yaml $SSH_USER_HOST:$TEMP_DIR/
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml pull
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME down --remove-orphans
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $TEMP_DIR/docker-compose.yaml -p $CI_PROJECT_NAME up -d
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $TEMP_DIR
+    - aaa-runner-#01
   rules:
-    - if: $CI_COMMIT_BRANCH == 'main' && $BUILD_DEPLOY_PROD == 'yesss'
+    - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
