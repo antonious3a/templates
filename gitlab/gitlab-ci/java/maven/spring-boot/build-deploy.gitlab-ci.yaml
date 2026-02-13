@@ -8,6 +8,14 @@ spec:
         - "17"
         - "21"
         - "25"
+    builder-image:
+      type: string
+      description: Name of the builder image to use.
+      default: docker.io/bellsoft/buildpacks.builder:musl # glibc or musl
+    run-image:
+      type: string
+      description: Name of the run image to use.
+      default: docker.io/bellsoft/buildpacks.alpaquita-run:musl
     test:
       description: Run tests
       type: string
@@ -70,12 +78,12 @@ spec:
     runner:
       description: Run the jobs on a specific runner
       type: string
-      default: aaa-runner
+      default: aaa
       options:
-        - aaa-runner
-        - aaa-runner-#01
-        - aaa-runner-#02
-        - aaa-runner-#03
+        - aaa
+        - runner-#01
+        - runner-#02
+        - runner-#03
 ---
 
 stages:
@@ -84,10 +92,10 @@ stages:
   - deploy
 
 variables:
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
   MAVEN_VERSION: 3.9.12
   JAVA_VERSION: $[[ inputs.java-version ]]
-
-  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
   TEST: $[[ inputs.test ]]
   SONAR: $[[ inputs.sonar ]]
@@ -95,28 +103,14 @@ variables:
   DEPLOY_DEV: $[[ inputs.deploy-dev ]]
   DEPLOY_PROD: $[[ inputs.deploy-prod ]]
 
-  DEV_ADD_SPRING_PROFILES: $[[ inputs.dev-additional-spring-profiles ]]
-  PROD_ADD_SPRING_PROFILES: $[[ inputs.prod-additional-spring-profiles ]]
-
-  DEV_REPLICAS: $[[ inputs.dev-replicas ]]
-  PROD_REPLICAS: $[[ inputs.prod-replicas ]]
-
-  DEV_JAVA_OPTS: $[[ inputs.dev-java-opts ]]
-  PROD_JAVA_OPTS: $[[ inputs.prod-java-opts ]]
-
-  VAULT_URI: $CPDI_VAULT_URI
-  VAULT_TOKEN: $DEV_VAULT_TOKEN
-
   MAVEN_LOCAL_REPO: ".m2/repository"
   MAVEN_OPTS: "-Dmaven.repo.local=$MAVEN_LOCAL_REPO"
   MAVEN_CLI_OPTS: "-s .m2/settings.xml -ntp" # -B
 
-  LOGSTASH_URI: ${DEV_LOGSTASH_URI_SPRING_BOOT}
-
   RUNNER: $[[ inputs.runner ]]
 
 .default:
-  image: antonio3a/ubuntu:24.04-dev-tools
+  image: docker.io/library/ubuntu:24.04
   retry: 1
   tags:
     - aaa
@@ -143,12 +137,18 @@ variables:
     - src/**/*
 
 test:
+  tags:
+    - aaa
+    - $RUNNER
   extends: .default
   image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   stage: test
   coverage: '/Total.*?(\d{1,3})%/'
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    VAULT_URI: $aaa_VAULT_URI
+    VAULT_TOKEN: $DEV_VAULT_TOKEN
+    LOGSTASH_URI: ${DEV_LOGSTASH_URI_SPRING_BOOT}
   cache:
     - *cache-maven
     - key: "sonar-cache"
@@ -175,10 +175,10 @@ test:
         path: target/site/jacoco/jacoco.xml
 
 build:
-  tags:
-    - aaa
-    - builder
   extends: .default
+  variables:
+    BUILDER_IMAGE: $[[ inputs.builder-image ]]
+    RUN_IMAGE: $[[ inputs.run-image ]]
   image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   resource_group: $CI_COMMIT_BRANCH
   stage: build
@@ -186,8 +186,10 @@ build:
     - *cache-maven
   before_script:
     - apk update
-    - apk add --no-cache docker-cli
+    - apk add --no-cache docker-cli docker-cli-buildx
   script:
+    - docker buildx imagetools inspect $RUN_IMAGE
+    - docker buildx imagetools inspect $BUILDER_IMAGE
     - *script-wget-maven-setting
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - |
@@ -198,8 +200,17 @@ build:
       else
         export ENVIRONMENT="$CI_COMMIT_BRANCH"
       fi
-
-    - mvn $MAVEN_CLI_OPTS clean spring-boot:build-image -DskipTests=true
+    - |
+      mvn $MAVEN_CLI_OPTS clean spring-boot:build-image -DskipTests=true \
+        -Ddocker.publishRegistry.url=$CI_REGISTRY \
+        -Ddocker.publishRegistry.username=$CI_REGISTRY_USER \
+        -Ddocker.publishRegistry.password=$CI_REGISTRY_PASSWORD \
+        -Dspring-boot.build-image.createdDate=now \
+        -Dspring-boot.build-image.builder=$BUILDER_IMAGE \
+        -Dspring-boot.build-image.runImage=$RUN_IMAGE \
+        -Dspring-boot.build-image.imageName=$CI_REGISTRY_IMAGE:$ENVIRONMENT \
+        -Dspring-boot.build-image.publish=true \
+        -Dspring-boot.build-image.pullPolicy=ALWAYS
     - docker rmi $CI_REGISTRY_IMAGE:$ENVIRONMENT
   rules:
     - if: ( $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss" ) || ( $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss" )
@@ -212,9 +223,19 @@ build:
   stage: deploy
   resource_group: $CI_COMMIT_BRANCH
   variables:
+    DEV_REPLICAS: $[[ inputs.dev-replicas ]]
+    PROD_REPLICAS: $[[ inputs.prod-replicas ]]
+
+    DEV_JAVA_OPTS: $[[ inputs.dev-java-opts ]]
+    PROD_JAVA_OPTS: $[[ inputs.prod-java-opts ]]
+
+    DEV_ADD_SPRING_PROFILES: $[[ inputs.dev-additional-spring-profiles ]]
+    PROD_ADD_SPRING_PROFILES: $[[ inputs.prod-additional-spring-profiles ]]
+
     SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
     PROJECT_DIR: /opt/docker/compose/stacks/$CI_PROJECT_NAME
     DOCKER_CONFIG: $PROJECT_DIR/.docker
+
     RETRIES: 10
     TIMEOUT: 30
   before_script:
@@ -306,7 +327,7 @@ deploy-prod:
   <<: *deploy-template
   tags:
     - aaa
-    - aaa-runner-#01
+    - prod-deployer
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
       <<: *deploy-changeset-template
