@@ -1,0 +1,15 @@
+include:
+  - project: "3A/templates"
+    file: "/gitlab-ci/java/maven/spring-boot/build-deploy.gitlab-ci.yaml"
+    inputs:
+      test: yesss
+      sonar: yesss
+      build: nooo
+      deploy-dev: yesss
+      deploy-prod: yesss
+      dev-replicas: 1
+      prod-replicas: 1
+      dev-java-opts: ""
+      prod-java-opts: ""
+      dev-additional-spring-profiles: "default"
+      prod-additional-spring-profiles: "default"
