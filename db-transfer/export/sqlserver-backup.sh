@@ -1,10 +1,10 @@
 #!/bin/bash
 
-REMOTE_HOST="172.16.33.56"
+REMOTE_HOST="172.16.0.10"
 REMOTE_PORT="1433"
 BACKUP_DIR="/backups/sqlserver"
-EXTRA_BACKUP_DIR="/backups/copy/sqlserver"
-DATE=$(date +"%Y%m%d_%H%M%S")
+EXTRA_BACKUP_DIR="/mnt/ssd1/backups/sqlserver"
+DATE=$(date +"%Y%m%d_%H%M")
 
 if [ -z "$SQL_USER" ] || [ -z "$SQL_PASSWORD" ]; then
   echo "Error: environment variables SQL_USER & SQL_PASSWORD are not set"
@@ -34,12 +34,11 @@ for DB in $DATABASES; do
   echo "Making backup of db: $DB"
   DB_BACKUP_DIR="${DBS_BACKUP_DIR}/${DB}"
   mkdir -p "$DB_BACKUP_DIR"
-  BACKUP_FILE="${DB_BACKUP_DIR}/${DB}.bak"
-
-
+  BACKUP_FILE="${BACKUP_DIR}/${DB}.bak"
 
   if sqlcmd -S "$REMOTE_HOST,$REMOTE_PORT" -U "$SQL_USER" -P "$SQL_PASSWORD" -C -Q "BACKUP DATABASE [$DB] TO DISK = N'$BACKUP_FILE' WITH FORMAT, INIT, NAME = 'Full Backup of $DB';"; then
     echo "Backup of $DB completed successfully, file: $BACKUP_FILE"
+    scp -i /home/antonio3a/.ssh/id_ed25519 -o StrictHostKeyChecking=no -rp antonio3a@"$REMOTE_HOST":"$BACKUP_FILE" "$DB_BACKUP_DIR"
   else
     echo "Error making backup of db $DB."
   fi
