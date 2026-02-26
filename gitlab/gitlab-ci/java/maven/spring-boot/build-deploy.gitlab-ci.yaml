@@ -11,7 +11,7 @@ spec:
     builder-image:
       type: string
       description: Name of the builder image to use.
-      default: docker.io/bellsoft/buildpacks.builder:musl # glibc or musl
+      default: docker.io/antonio3a/bellsoft-buildpacks.builder:musl
     run-image:
       type: string
       description: Name of the run image to use.
@@ -75,8 +75,17 @@ spec:
       description: Additional Spring profiles for the production environment
       type: string
       default: "default"
-    runner:
-      description: Run the jobs on a specific runner
+    test-runner:
+      description: Run the test job on a specific runner
+      type: string
+      default: aaa
+      options:
+        - aaa
+        - runner-#01
+        - runner-#02
+        - runner-#03
+    build-runner:
+      description: Run the build job on a specific runner
       type: string
       default: aaa
       options:
@@ -107,14 +116,14 @@ variables:
   MAVEN_OPTS: "-Dmaven.repo.local=$MAVEN_LOCAL_REPO"
   MAVEN_CLI_OPTS: "-s .m2/settings.xml -ntp" # -B
 
-  RUNNER: $[[ inputs.runner ]]
+  TEST_RUNNER: $[[ inputs.test-runner ]]
+  BUILD_RUNNER: $[[ inputs.build-runner ]]
 
 .default:
   image: docker.io/library/ubuntu:24.04
   retry: 1
   tags:
     - aaa
-    - $RUNNER
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" in branch "$CI_COMMIT_BRANCH" finished with status "$CI_JOB_STATUS"!
 
@@ -135,18 +144,18 @@ variables:
   changes:
     - pom.xml
     - src/**/*
+    - .gitlab-ci.yml
 
 test:
-  tags:
-    - aaa
-    - $RUNNER
   extends: .default
+  tags:
+    - $TEST_RUNNER
   image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   stage: test
   coverage: '/Total.*?(\d{1,3})%/'
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    VAULT_URI: $aaa_VAULT_URI
+    VAULT_URI: $AAA_VAULT_URI
     VAULT_TOKEN: $DEV_VAULT_TOKEN
     LOGSTASH_URI: ${DEV_LOGSTASH_URI_SPRING_BOOT}
   cache:
@@ -176,6 +185,8 @@ test:
 
 build:
   extends: .default
+  tags:
+    - $BUILD_RUNNER
   variables:
     BUILDER_IMAGE: $[[ inputs.builder-image ]]
     RUN_IMAGE: $[[ inputs.run-image ]]
@@ -201,16 +212,18 @@ build:
         export ENVIRONMENT="$CI_COMMIT_BRANCH"
       fi
     - |
-      mvn $MAVEN_CLI_OPTS clean spring-boot:build-image -DskipTests=true \
-        -Ddocker.publishRegistry.url=$CI_REGISTRY \
-        -Ddocker.publishRegistry.username=$CI_REGISTRY_USER \
-        -Ddocker.publishRegistry.password=$CI_REGISTRY_PASSWORD \
+      mvn $MAVEN_CLI_OPTS clean spring-boot:build-image \
+        -DskipTests=true \
+        -Ddocker.publishRegistry.url="$CI_REGISTRY" \
+        -Ddocker.publishRegistry.username="$CI_REGISTRY_USER" \
+        -Ddocker.publishRegistry.password="$CI_REGISTRY_PASSWORD" \
         -Dspring-boot.build-image.createdDate=now \
+        -Dspring-boot.build-image.publish=false \
+        -Dspring-boot.build-image.pullPolicy=ALWAYS \
         -Dspring-boot.build-image.builder=$BUILDER_IMAGE \
         -Dspring-boot.build-image.runImage=$RUN_IMAGE \
-        -Dspring-boot.build-image.imageName=$CI_REGISTRY_IMAGE:$ENVIRONMENT \
-        -Dspring-boot.build-image.publish=true \
-        -Dspring-boot.build-image.pullPolicy=ALWAYS
+        -Dspring-boot.build-image.imageName=$CI_REGISTRY_IMAGE:$ENVIRONMENT
+    - docker push $CI_REGISTRY_IMAGE:$ENVIRONMENT
     - docker rmi $CI_REGISTRY_IMAGE:$ENVIRONMENT
   rules:
     - if: ( $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss" ) || ( $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss" )
@@ -326,7 +339,6 @@ deploy-dev:
 deploy-prod:
   <<: *deploy-template
   tags:
-    - aaa
     - prod-deployer
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
