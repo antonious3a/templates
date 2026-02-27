@@ -12,4 +12,4 @@ RUN apk update && \
 
 USER cnb
 
-# docker build --pull=always -t docker.io/antonio3a/bellsoft-buildpacks.alpaquita-run:musl .
+# docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.io/antonio3a/bellsoft-buildpacks.alpaquita-run:musl -t quay.io/antonio3a/bellsoft-buildpacks.alpaquita-run:musl .
