@@ -13,4 +13,4 @@ RUN if [ -n "$PACKAGES" ]; then \
 
 USER cnb
 
-# C_LIB="glibc" && docker buildx build --platform linux/amd64,linux/arm64  --build-arg C_LIB=$C_LIB --build-arg PACKAGES="wget curl" --push -t docker.io/antonio3a/bellsoft-buildpacks.alpaquita-run:$C_LIB -t quay.io/antonio3a/bellsoft-buildpacks.alpaquita-run:$C_LIB .
+# C_LIB="glibc" && docker buildx build --pull --platform linux/amd64,linux/arm64 --build-arg C_LIB=$C_LIB --build-arg PACKAGES="wget curl" --push -t docker.io/antonio3a/bellsoft-buildpacks.alpaquita-run:$C_LIB -t quay.io/antonio3a/bellsoft-buildpacks.alpaquita-run:$C_LIB .
