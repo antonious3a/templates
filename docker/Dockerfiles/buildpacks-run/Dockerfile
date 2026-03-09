@@ -1,12 +1,11 @@
-ARG BASE_IMAGE="docker.io/ubuntu"
-ARG TAG="noble"
+ARG BASE_IMAGE="docker.io/ubuntu:latest"
 
-FROM ${BASE_IMAGE}:${TAG}
+FROM ${BASE_IMAGE}
+
 LABEL authors="antonio3a"
 
 USER root
 
-ARG TAG
 ARG PACKAGES=""
 
 RUN if [ -n "$PACKAGES" ]; then \
@@ -30,7 +29,6 @@ USER cnb
 # --platform linux/amd64,linux/arm64 \
 # --pull \
 # --build-arg BASE_IMAGE=$BASE_IMAGE \
-# --build-arg TAG=$TAG \
 # --build-arg PACKAGES="wget curl" \
 # --push \
 # -t docker.io/antonio3a/buildpacks-run:$TAG \
