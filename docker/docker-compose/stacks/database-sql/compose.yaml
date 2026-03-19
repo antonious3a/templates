@@ -1,7 +1,7 @@
 x-common : &common
   networks:
     - aaa-bridge
-  restart: unless-stopped
+  restart: always
 
 networks:
   aaa-bridge:
@@ -10,8 +10,8 @@ networks:
 services:
   mysql:
     <<: *common
-    image: mysql:9.3.0
-    container_name: mysql
+    image: mysql:9.6.0
+    container_name: aaa-mysql
     hostname: mysql.antonio3a.aaa
     environment:
       - MYSQL_ROOT_PASSWORD=${AAA_PASS}
@@ -23,8 +23,8 @@ services:
 
   postgresql:
     <<: *common
-    image: postgres:17.6
-    container_name: postgresql
+    image: postgres:18.3
+    container_name: aaa-postgresql
     hostname: postgresql.antonio3a.aaa
     environment:
       - POSTGRES_USER=${AAA_USER}
@@ -38,8 +38,8 @@ services:
 
   sqlserver:
     <<: *common
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: aaa-sqlserver
     hostname: sqlserver.antonio3a.aaa
     environment:
       - ACCEPT_EULA=Y
@@ -52,8 +52,5 @@ services:
 
 volumes:
   aaa-mysql-vol:
-    external: true
   aaa-postgresql-vol:
-    external: true
   aaa-sqlserver-vol:
-    external: true
