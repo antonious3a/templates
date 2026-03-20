@@ -3,4 +3,8 @@ LABEL authors="antonio3a"
 
 COPY buildpack.toml /cnb/buildpacks/bellsoft_buildpacks_liberica/20260319/
 
-# docker buildx build --platform linux/amd64,linux/arm64 --push -t docker.io/antonio3a/bellsoft-buildpacks.builder:musl -t quay.io/antonio3a/bellsoft-buildpacks.builder:musl .
+# docker buildx build
+#   --platform linux/amd64,linux/arm64 \
+#   --pull --push  \
+#   -t docker.io/antonio3a/bellsoft-buildpacks.builder:musl \
+#   -t quay.io/antonio3a/bellsoft-buildpacks.builder:musl .
