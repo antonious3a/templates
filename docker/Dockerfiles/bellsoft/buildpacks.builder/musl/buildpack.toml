@@ -289,7 +289,7 @@ api = "0.7"
     id = "jre"
     name = "BellSoft Liberica jre (Lite or NIK) (musl)"
     purl = "pkg:generic/bellsoft-jre@25.0.2?arch=amd64&libc=musl"
-    sha256 = "15c5a3a5c651f2f46e1bbe1655e21e57a057046cae7e2c7ab8318c90966702a3"
+    sha256 = "25a28bb58df1c52193451ce8a56100353ad1f8842447980ed6376d3fa61b6096"
     source = "https://github.com/bell-sw/Liberica/releases/download/25.0.2+12/bellsoft-jdk25.0.2+12-src.tar.gz"
     source-sha256 = "@SRCSHA256@"
     stacks = ["io.buildpacks.stacks.alpaquita-musl"]
