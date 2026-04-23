@@ -1,3 +1,5 @@
+name: nginx-proxy-manager
+
 x-common: &common
   networks:
     - aaa-bridge
@@ -6,18 +8,17 @@ x-common: &common
 services:
   nginx-proxy-manager:
     <<: *common
-    image: jc21/nginx-proxy-manager:2.12.3
+    image: jc21/nginx-proxy-manager:2.14.0
     hostname: nginx-proxy-manager.antonio3a.aaa
-    container_name: nginx-proxy-manager
+    container_name: aaa-nginx-proxy-manager
     ports:
       - "80:80"
       - "443:443"
-      - "81:81"
-      - "21:21"
+      - "127.0.0.1:81:81"
     environment:
       INITIAL_ADMIN_EMAIL: ${AAA_EMAIL}
       INITIAL_ADMIN_PASSWORD: ${AAA_PASS}
-      DB_POSTGRES_HOST: postgresql.antonio3a.aaa
+      DB_POSTGRES_HOST: aaa-postgresql
       DB_POSTGRES_PORT: 5432
       DB_POSTGRES_USER: ${AAA_USER}
       DB_POSTGRES_PASSWORD: ${AAA_PASS}
@@ -32,6 +33,4 @@ networks:
 
 volumes:
   aaa-nginx-proxy-manager-data-vol:
-    external: true
   aaa-nginx-proxy-manager-letsencrypt-vol:
-    external: true

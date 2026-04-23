@@ -1,11 +1,13 @@
-x-common : &common
-  networks:
-    - aaa-bridge
-  restart: always
+name: database-sql
 
 networks:
   aaa-bridge:
     external: true
+
+x-common : &common
+  networks:
+    - aaa-bridge
+  restart: always
 
 services:
   mysql:
@@ -33,7 +35,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ${AAA_HOME}/ssl:/var/lib/postgresql/data/certs:ro
       - aaa-postgresql-vol:/var/lib/postgresql/data
 
   sqlserver:
