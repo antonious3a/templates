@@ -1,23 +1,26 @@
+name: vault
+
 x-common : &common
   networks:
     - aaa-bridge
-  restart: unless-stopped
+  restart: always
 
 services:
   vault:
     <<: *common 
-    image: hashicorp/vault:1.18.3
-    container_name: vault
+    image: hashicorp/vault:2.0.0
+    container_name: aaa-vault
     hostname: vault.antonio3a.aaa
     volumes:
-      - vault-logs-vol:/vault/logs
-      - vault-file-vol:/vault/file
+      - aaa-vault-logs-vol:/vault/logs
+      - aaa-vault-file-vol:/vault/file
       - ${AAA_HOME}/vault/config/local.json:/vault/config/local.json
     environment:
       VAULT_ADDR: http://127.0.0.1:8200
       VAULT_API_ADDR: http://127.0.0.1:8200
-    ports:
-      - '8200:8200'
+#      SKIP_SETCAP: YES
+#    ports:
+#      - '8200:8200'
     cap_add:
       - IPC_LOCK
     command: server
@@ -27,19 +30,19 @@ services:
   vault-unseal:
     <<: *common 
     image: blockloop/vault-unseal
-    container_name: vault-unseal
+    container_name: aaa-vault-unseal
     hostname: vault-unseal.antonio3a.aaa
     environment:
-      VAULT_ADDR: http://vault.antonio3a.aaa:8200
-      VAULT_VERSION: 1.18.3
+      VAULT_ADDR: http://aaa-vault:8200
+      VAULT_VERSION: 2.0.0
       VAULT_UNSEAL_KEY_1: 1
       VAULT_UNSEAL_KEY_2: 2
       VAULT_UNSEAL_KEY_3: 3
       VAULT_UNSEAL_KEY_4: 4
       VAULT_UNSEAL_KEY_5: 5
     volumes:
-      - vault-logs-vol:/vault/logs
-      - vault-file-vol:/vault/file
+      - aaa-vault-logs-vol:/vault/logs
+      - aaa-vault-file-vol:/vault/file
     depends_on:
       - vault
 
@@ -49,6 +52,4 @@ networks:
 
 volumes:
   vault-logs-vol:
-    external: true
   vault-file-vol:
-    external: true
