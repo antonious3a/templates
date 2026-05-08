@@ -8,14 +8,14 @@ spec:
         - "17"
         - "21"
         - "25"
-    builder-image:
+    buildpacks-tag:
+      description: Builder image type to use for building the application
       type: string
-      description: Name of the builder image to use.
-      default: docker.io/antonio3a/bellsoft-buildpacks.builder:musl
-    run-image:
-      type: string
-      description: Name of the run image to use.
-      default: docker.io/bellsoft/buildpacks.alpaquita-run:musl
+      default: "musl"
+      options:
+        - "musl"
+        - "glibc"
+        - "noble"
     test:
       description: Run tests
       type: string
@@ -78,21 +78,26 @@ spec:
     test-runner:
       description: Run the test job on a specific runner
       type: string
-      default: aaa
+      default: cpdi
       options:
-        - aaa
+        - cpdi
         - runner-#01
         - runner-#02
         - runner-#03
     build-runner:
       description: Run the build job on a specific runner
       type: string
-      default: aaa
+      default: cpdi
       options:
-        - aaa
+        - cpdi
         - runner-#01
         - runner-#02
         - runner-#03
+    packages:
+      type: string
+      description: List of packages to install in the run image
+      default: ""
+
 ---
 
 stages:
@@ -103,11 +108,12 @@ stages:
 variables:
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
-  MAVEN_VERSION: 3.9.12
+  MAVEN_VERSION: 3.9.15
   JAVA_VERSION: $[[ inputs.java-version ]]
 
   TEST: $[[ inputs.test ]]
   SONAR: $[[ inputs.sonar ]]
+  BUILD: $[[ inputs.build ]]
 
   DEPLOY_DEV: $[[ inputs.deploy-dev ]]
   DEPLOY_PROD: $[[ inputs.deploy-prod ]]
@@ -121,9 +127,9 @@ variables:
 
 .default:
   image: docker.io/library/ubuntu:24.04
-  retry: 1
+  retry: 0
   tags:
-    - aaa
+    - cpdi
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" in branch "$CI_COMMIT_BRANCH" finished with status "$CI_JOB_STATUS"!
 
@@ -133,12 +139,13 @@ variables:
     paths:
       - "$MAVEN_LOCAL_REPO"
 
-.script-wget-maven-setting: &script-wget-maven-setting
+.script-wget-maven-setting: &script-curl-maven-setting
   - mkdir -p .m2
   - |
-    wget -qO .m2/settings.xml \
-      --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
-      "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH}/raw?ref=main"
+    curl -ksSL \
+      -H "PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+      "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_MAVEN_SETTINGS_XML_PATH}/raw?ref=main" \
+      -o .m2/settings.xml
 
 .pom-src-changeset-template: &pom-src-changeset-template
   changes:
@@ -150,12 +157,12 @@ test:
   extends: .default
   tags:
     - $TEST_RUNNER
-  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
+  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-noble
   stage: test
   coverage: '/Total.*?(\d{1,3})%/'
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    VAULT_URI: $AAA_VAULT_URI
+    VAULT_URI: $CPDI_VAULT_URI
     VAULT_TOKEN: $DEV_VAULT_TOKEN
     LOGSTASH_URI: ${DEV_LOGSTASH_URI_SPRING_BOOT}
   cache:
@@ -164,7 +171,7 @@ test:
       paths:
         - "${SONAR_USER_HOME}/cache"
   before_script:
-    - *script-wget-maven-setting
+    - *script-curl-maven-setting
   script:
     - mvn $MAVEN_CLI_OPTS verify
     - |
@@ -185,12 +192,12 @@ test:
 
 build:
   extends: .default
+  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
   tags:
     - $BUILD_RUNNER
   variables:
-    BUILDER_IMAGE: $[[ inputs.builder-image ]]
-    RUN_IMAGE: $[[ inputs.run-image ]]
-  image: docker.io/maven:${MAVEN_VERSION}-eclipse-temurin-${JAVA_VERSION}-alpine
+    TAG: $[[ inputs.buildpacks-tag ]]
+    PACKAGES: $[[ inputs.packages ]]
   resource_group: $CI_COMMIT_BRANCH
   stage: build
   cache:
@@ -199,10 +206,44 @@ build:
     - apk update
     - apk add --no-cache docker-cli docker-cli-buildx
   script:
-    - docker buildx imagetools inspect $RUN_IMAGE
-    - docker buildx imagetools inspect $BUILDER_IMAGE
-    - *script-wget-maven-setting
+    - *script-curl-maven-setting
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$TAG" = "glibc" ]; then
+        export SHA256="fb75ce539479c5cafb3cf3ca416b9390a716cb6451c98b5f28d6bc1fa132815b"
+      elif [ "$TAG" = "musl" ]; then
+        export SHA256="4d36dc5fc2370589e804ab42ae4fd9da0745220570e50411cd79a9c3c23ecf2f"
+      fi
+
+    - |
+      if [ "$TAG" = "noble" ]; then
+        export BUILDER_IMAGE="docker.io/paketobuildpacks/builder-noble-java-tiny:latest"
+        export BASE_IMAGE="docker.io/paketobuildpacks/ubuntu-noble-run:latest"
+        export PACKAGES="$PACKAGES wget"
+      else
+        export BUILDER_IMAGE="docker.io/bellsoft/buildpacks.builder:$TAG"
+        export BASE_IMAGE="docker.io/bellsoft/buildpacks.alpaquita-run:$TAG"
+      fi
+    - docker pull $BUILDER_IMAGE
+    - docker pull $BASE_IMAGE
+    - |
+      if [ -n "$PACKAGES" ]; then
+        curl -skSL \
+          -H "PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+          "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_BUILDPACKS_RUN_DOCKERFILE_PATH}/raw?ref=main" \
+          -o Dockerfile
+      
+        export RUN_IMAGE="gitlab-ci.cpdi.dev/job/$CI_JOB_ID/buildpacks-run:$TAG"
+      
+        docker buildx build \
+          --pull \
+          --platform linux/amd64 \
+          --build-arg BASE_IMAGE=$BASE_IMAGE \
+          --build-arg PACKAGES="$PACKAGES" \
+          -t $RUN_IMAGE .
+      else
+        export RUN_IMAGE=$BASE_IMAGE
+      fi
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         export ENVIRONMENT="production"
@@ -219,20 +260,22 @@ build:
         -Ddocker.publishRegistry.password="$CI_REGISTRY_PASSWORD" \
         -Dspring-boot.build-image.createdDate=now \
         -Dspring-boot.build-image.publish=false \
-        -Dspring-boot.build-image.pullPolicy=ALWAYS \
+        -Dspring-boot.build-image.pullPolicy=IF_NOT_PRESENT \
         -Dspring-boot.build-image.builder=$BUILDER_IMAGE \
         -Dspring-boot.build-image.runImage=$RUN_IMAGE \
         -Dspring-boot.build-image.imageName=$CI_REGISTRY_IMAGE:$ENVIRONMENT
     - docker push $CI_REGISTRY_IMAGE:$ENVIRONMENT
     - docker rmi $CI_REGISTRY_IMAGE:$ENVIRONMENT
+    - if [ -n "$PACKAGES" ]; then docker rmi $RUN_IMAGE; fi
   rules:
     - if: ( $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss" ) || ( $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss" )
       <<: *pom-src-changeset-template
     - if: $BUILD == "yesss"
+      <<: *pom-src-changeset-template
 
 .deploy-template: &deploy-template
   extends: .default
-  image: docker.io/alpine:3.23.3
+  image: docker.io/alpine:3.23.4
   stage: deploy
   resource_group: $CI_COMMIT_BRANCH
   variables:
@@ -245,7 +288,6 @@ build:
     DEV_ADD_SPRING_PROFILES: $[[ inputs.dev-additional-spring-profiles ]]
     PROD_ADD_SPRING_PROFILES: $[[ inputs.prod-additional-spring-profiles ]]
 
-    SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
     PROJECT_DIR: /opt/docker/compose/stacks/$CI_PROJECT_NAME
     DOCKER_CONFIG: $PROJECT_DIR/.docker
 
@@ -272,8 +314,6 @@ build:
       VAR_SSH_PORT=${ENV}_VM_SSH_PORT
       export SSH_PORT=$(printenv $VAR_SSH_PORT)
       
-      export SSH_USER_HOST="$GB_USERNAME@$VM_IP"
-      
       VAR_JAVA_OPTS=${ENV}_JAVA_OPTS
       export JAVA_OPTS=$(printenv $VAR_JAVA_OPTS)
       
@@ -290,12 +330,17 @@ build:
       export ADD_SPRING_PROFILES=$(printenv $VAR_ADD_SPRING_PROFILES)
       export SPRING_PROFILES_ACTIVE="deploy, docker, $env, $ENVIRONMENT, $ADD_SPRING_PROFILES"
 
+    - |
+      export SSH_USER_HOST="$GB_USERNAME@$VM_IP"
+      export SSH_ARGS="-i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT"
+      export SCP_ARGS="-i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -P $SSH_PORT"
+      export SSH_CMD="ssh $SSH_ARGS $SSH_USER_HOST"
 
     - |
       if [ ! -f compose.yaml ]; then
         wget -qO compose.yaml \
-        --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
-        "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_SPRING_BOOT_MAVEN_COMPOSE_TEMPLATE_PATH}/raw?ref=main"
+          --header="PRIVATE-TOKEN: ${DEV_GITLAB_TOKEN}" \
+          "${CI_API_V4_URL}/projects/${TEMPLATES_PROJECT_ID}/repository/files/${TEMPLATES_PROJECT_SPRING_BOOT_MAVEN_COMPOSE_TEMPLATE_PATH}/raw?ref=main"
       fi
     - |
       wget -qO check-container-health.sh \
@@ -309,19 +354,20 @@ build:
     - echo -e ENVIRONMENT="$ENVIRONMENT""\n" >> .env
 
     - chmod og= $GB_SSH_PRIVATE_KEY
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "mkdir -p {$PROJECT_DIR,$DOCKER_CONFIG}"
-    - scp $SSH_CONFIG -P $SSH_PORT .env compose.yaml check-container-health.sh $SSH_USER_HOST:$PROJECT_DIR/
+    - $SSH_CMD "mkdir -p {$PROJECT_DIR,$DOCKER_CONFIG}"
+    - scp $SCP_ARGS .env compose.yaml check-container-health.sh $SSH_USER_HOST:$PROJECT_DIR/
 
     - |
-      echo $CI_REGISTRY_PASSWORD | ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST \
+      echo $CI_REGISTRY_PASSWORD | $SSH_CMD \
         "DOCKER_CONFIG=$DOCKER_CONFIG docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY"
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST "DOCKER_CONFIG=$DOCKER_CONFIG docker compose -f $PROJECT_DIR/compose.yaml pull"
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml down --remove-orphans
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker compose -f $PROJECT_DIR/compose.yaml up -d
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST chmod +x $PROJECT_DIR/check-container-health.sh
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST $PROJECT_DIR/check-container-health.sh $CI_PROJECT_NAME $RETRIES $TIMEOUT
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST docker image prune -f || echo 'Prune already running,,, skipping...'
-    - ssh $SSH_CONFIG -p $SSH_PORT $SSH_USER_HOST rm -rf $PROJECT_DIR/.env $DOCKER_CONFIG
+    - export DCF="docker compose -f $PROJECT_DIR/compose.yaml"
+    - $SSH_CMD "DOCKER_CONFIG=$DOCKER_CONFIG $DCF pull"
+    - $SSH_CMD $DCF down --remove-orphans
+    - $SSH_CMD $DCF up -d
+    - $SSH_CMD chmod +x $PROJECT_DIR/check-container-health.sh
+    - $SSH_CMD $PROJECT_DIR/check-container-health.sh $CI_PROJECT_NAME $RETRIES $TIMEOUT
+    - $SSH_CMD docker image prune -f || echo 'Prune already running,,, skipping...'
+    - $SSH_CMD rm -rf $PROJECT_DIR/.env $DOCKER_CONFIG
 
 .deploy-changeset-template: &deploy-changeset-template
   changes:
@@ -332,6 +378,7 @@ build:
 
 deploy-dev:
   <<: *deploy-template
+  environment: development
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss"
       <<: *deploy-changeset-template
@@ -340,6 +387,8 @@ deploy-prod:
   <<: *deploy-template
   tags:
     - prod-deployer
+  environment: production
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
       <<: *deploy-changeset-template
+      when: manual
