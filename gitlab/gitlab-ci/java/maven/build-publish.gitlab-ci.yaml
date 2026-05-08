@@ -36,8 +36,8 @@ stages:
   - publish
 
 .default:
-  image: maven:3.9.12-eclipse-temurin-${JAVA_VERSION}-alpine
-  retry: 1
+  image: maven:3.9.15-eclipse-temurin-${JAVA_VERSION}-alpine
+  retry: 0
   tags:
     - cpdi
   before_script:
@@ -58,6 +58,7 @@ stages:
   changes:
     - pom.xml
     - src/**/*
+    - .gitlab-ci.yml
 
 variables:
   JAVA_VERSION: $[[ inputs.java-version ]]
