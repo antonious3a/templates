@@ -11,6 +11,7 @@ services:
       VAULT_URI: ${VAULT_URI}
       VAULT_TOKEN: ${VAULT_TOKEN}
       LOGSTASH_URI: ${LOGSTASH_URI}
+      SPRING_CLOUD_VAULT_FAIL-FAST: true
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     healthcheck:
       test: wget -qO- --no-check-certificate http://localhost/actuator/health/readiness | grep -q UP
