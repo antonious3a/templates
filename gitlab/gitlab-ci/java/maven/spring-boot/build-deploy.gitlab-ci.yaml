@@ -108,7 +108,7 @@ stages:
 variables:
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
-  MAVEN_VERSION: 3.9.15
+  MAVEN_VERSION: 3.9.16
   JAVA_VERSION: $[[ inputs.java-version ]]
 
   TEST: $[[ inputs.test ]]
@@ -173,7 +173,7 @@ test:
   before_script:
     - *script-curl-maven-setting
   script:
-    - mvn $MAVEN_CLI_OPTS verify
+    - mvn $MAVEN_CLI_OPTS verify -Dspring.profiles.active=test
     - |
       if [ "$SONAR" == "yesss" ]; then
         mvn $MAVEN_CLI_OPTS sonar:sonar || true
