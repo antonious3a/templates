@@ -37,14 +37,15 @@ variables:
   tags:
     - aaa
   resource_group: $CI_COMMIT_BRANCH
-  retry: 1
+  retry: 0
   after_script:
     - echo Job started by user "$GITLAB_USER_NAME" finished with status $CI_JOB_STATUS
 
 build:
   stage: build
   extends: .default
-  image: docker.io/node:24.13.0-alpine
+  image: docker.io/node:24.16.0-alpine
+  resource_group: $CI_COMMIT_BRANCH
   cache:
     key: node-modules-$CI_PROJECT_NAME
     paths:
@@ -74,7 +75,8 @@ build:
 
 .deploy-template: &deploy-template
   extends: .default
-  image: docker.io/alpine:3.23.3
+  image: docker.io/alpine:3.23.4
+  resource_group: $CI_COMMIT_BRANCH
   stage: deploy
   variables:
     SSH_CONFIG: -i $GB_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no
@@ -130,12 +132,15 @@ build:
 
 deploy-dev:
   <<: *deploy-template
+  environment: development
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" && $DEPLOY_DEV == "yesss"
 
 deploy-prod:
   <<: *deploy-template
+  environment: production
   tags:
-    - aaa-runner-#01
+    - prod-deployer
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $DEPLOY_PROD == "yesss"
+      when: manual
