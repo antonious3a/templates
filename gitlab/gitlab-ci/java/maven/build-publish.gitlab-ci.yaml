@@ -36,7 +36,7 @@ stages:
   - publish
 
 .default:
-  image: maven:3.9.15-eclipse-temurin-${JAVA_VERSION}-alpine
+  image: maven:3.9.16-eclipse-temurin-${JAVA_VERSION}-alpine
   retry: 0
   tags:
     - cpdi
